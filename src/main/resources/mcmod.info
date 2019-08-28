@@ -1,0 +1,16 @@
+[
+{
+  "modid": "nbtmanipulator",
+  "name": "NBT Manipulator",
+  "description": "Allows editing of NBT during runtime",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Laike_Endaril"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
