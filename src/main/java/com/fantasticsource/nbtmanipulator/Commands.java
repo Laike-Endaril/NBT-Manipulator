@@ -40,7 +40,7 @@ public class Commands extends CommandBase
                 if (sender instanceof EntityPlayerMP)
                 {
                     ItemStack stack = ((EntityPlayerMP) sender).getHeldItemMainhand();
-                    System.out.println(stack);
+                    Network.WRAPPER.sendTo(new Network.NBTGUIPacket(stack), (EntityPlayerMP) sender);
                 }
                 break;
 

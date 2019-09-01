@@ -21,6 +21,7 @@ public class NBTManipulator
     @Mod.EventHandler
     public static void preInit(FMLPreInitializationEvent event)
     {
+        Network.init();
         MinecraftForge.EVENT_BUS.register(NBTManipulator.class);
     }
 
