@@ -11,6 +11,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import static com.fantasticsource.nbtmanipulator.NBTGUI.MODE_ITEM;
+
 public class Network
 {
     public static final SimpleNetworkWrapper WRAPPER = new SimpleNetworkWrapper(NBTManipulator.MODID);
@@ -56,8 +58,7 @@ public class Network
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(NBTGUIPacket packet, MessageContext ctx)
         {
-            Minecraft mc = Minecraft.getMinecraft();
-            mc.addScheduledTask(() -> mc.displayGuiScreen(new NBTGUI(NBTGUI.MODE_ITEM, packet.serializedNBT)));
+            Minecraft.getMinecraft().addScheduledTask(() -> NBTGUI.show(MODE_ITEM, packet.serializedNBT));
             return null;
         }
     }
