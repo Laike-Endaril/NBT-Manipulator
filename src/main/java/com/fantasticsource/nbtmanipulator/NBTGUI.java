@@ -33,6 +33,8 @@ public class NBTGUI extends GUIScreen
         guiElements.add(new GUIGradientRect(this, 0, 0, 1, 1, BLACK, BLACK, BLACK, BLACK));
 
         //Multiline Text Input
-        guiElements.add(new MultilineTextInput(this, 0, 0, 1, 1, lines.toArray(new String[0])));
+        MultilineTextInput multi = new MultilineTextInput(this, 0, 0, 1, 1, lines.toArray(new String[0]));
+        guiElements.add(multi);
+        multi.get(0).setActive(true);
     }
 }
