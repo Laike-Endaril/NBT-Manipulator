@@ -32,6 +32,7 @@ public class NBTGUI extends GUIScreen
     private static ArrayList<String> lines;
     private static GUITextButton saveButton, cancelButton;
     private static MultilineTextInput code;
+    private static GUIVerticalScrollbar codeScroll;
     private static GUIRectScrollView log;
 
     static
@@ -45,6 +46,17 @@ public class NBTGUI extends GUIScreen
         lines = MCTools.legibleNBT(nbtString);
         Minecraft.getMinecraft().displayGuiScreen(GUI);
         Keyboard.enableRepeatEvents(true);
+
+
+        //Multiline Text Input
+        double y = saveButton.height;
+        GUI.guiElements.remove(codeScroll);
+        GUI.guiElements.remove(code);
+        code = new MultilineTextInput(GUI, 0, y, 1, 2d / 3 - y, lines.toArray(new String[0]));
+        GUI.guiElements.add(code);
+        code.get(0).setActive(true);
+        codeScroll = new GUIVerticalScrollbar(GUI, 0.97, 0, 0.03, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
+        GUI.guiElements.add(codeScroll);
     }
 
     @Override
@@ -66,15 +78,15 @@ public class NBTGUI extends GUIScreen
         code = new MultilineTextInput(this, 0, y, 1, 2d / 3 - y, lines.toArray(new String[0]));
         guiElements.add(code);
         code.get(0).setActive(true);
-        GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(this, 0.97, 0, 0.03, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
-        guiElements.add(scrollbar);
+        codeScroll = new GUIVerticalScrollbar(this, 0.97, 0, 0.03, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
+        guiElements.add(codeScroll);
 
 
         //Error log
         y = code.y + code.height;
         log = new GUIRectScrollView(this, 0, y, 1, 1 - y);
         guiElements.add(log);
-        scrollbar = new GUIVerticalScrollbar(this, 0.97, 2d / 3, 0.03, 1d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
+        GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(this, 0.97, 2d / 3, 0.03, 1d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
         guiElements.add(scrollbar);
     }
 
@@ -110,49 +122,36 @@ public class NBTGUI extends GUIScreen
             try
             {
                 NBTTagCompound compound = JsonToNBT.getTagFromJson(s.toString());
-                ItemStack stack = new ItemStack(compound);
+                new ItemStack(compound);
+                Network.WRAPPER.sendToServer(new Network.NBTSavePacket(s.toString()));
             }
             catch (Exception e)
             {
-                setLog(e.toString());
+                setError(e.toString());
             }
         }
     }
 
-    public static void setLog(String error)
+    public static void setError(String error)
     {
-        while (log.size() > 0) log.remove(0);
+        GUI.guiElements.remove(log);
+        double y = code.y + code.height;
+        log = new GUIRectScrollView(GUI, 0, y, 1, 1 - y);
+        GUI.guiElements.add(log);
         for (String err : error.replaceAll("\r", "").split("\n"))
         {
             log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, err, Color.RED));
-            int i = 0;
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "" + i++, Color.RED));
         }
+        log.recalc();
+    }
+
+    public static void setSuccess()
+    {
+        GUI.guiElements.remove(log);
+        double y = code.y + code.height;
+        log = new GUIRectScrollView(GUI, 0, y, 1, 1 - y);
+        GUI.guiElements.add(log);
+        log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "Item successfully saved!", Color.GREEN));
         log.recalc();
     }
 }

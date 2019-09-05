@@ -24,7 +24,8 @@ public class Network
     public static void init()
     {
         WRAPPER.registerMessage(NBTGUIPacketHandler.class, NBTGUIPacket.class, discriminator++, Side.CLIENT);
-        WRAPPER.registerMessage(NBTCreatePacketHandler.class, NBTCreatePacket.class, discriminator++, Side.SERVER);
+        WRAPPER.registerMessage(NBTSavePacketHandler.class, NBTSavePacket.class, discriminator++, Side.SERVER);
+        WRAPPER.registerMessage(NBTResultPacketHandler.class, NBTResultPacket.class, discriminator++, Side.CLIENT);
     }
 
 
@@ -67,16 +68,16 @@ public class Network
         }
     }
 
-    public static class NBTCreatePacket implements IMessage
+    public static class NBTSavePacket implements IMessage
     {
         String compoundString;
 
-        public NBTCreatePacket()
+        public NBTSavePacket()
         {
             //Required
         }
 
-        public NBTCreatePacket(String compoundString)
+        public NBTSavePacket(String compoundString)
         {
             this.compoundString = compoundString;
         }
@@ -94,22 +95,24 @@ public class Network
         }
     }
 
-    public static class NBTCreatePacketHandler implements IMessageHandler<NBTCreatePacket, IMessage>
+    public static class NBTSavePacketHandler implements IMessageHandler<NBTSavePacket, IMessage>
     {
         @Override
-        public IMessage onMessage(NBTCreatePacket packet, MessageContext ctx)
+        public IMessage onMessage(NBTSavePacket packet, MessageContext ctx)
         {
             FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() ->
             {
                 try
                 {
                     NBTTagCompound compound = JsonToNBT.getTagFromJson(packet.compoundString);
-                    new ItemStack(compound);
+                    System.out.println(new ItemStack(compound).isEmpty());
                     ctx.getServerHandler().player.getHeldItemMainhand().deserializeNBT(compound);
+                    System.out.println(ctx.getServerHandler().player.getHeldItemMainhand().getDisplayName());
+                    WRAPPER.sendTo(new NBTResultPacket(""), ctx.getServerHandler().player);
                 }
                 catch (Exception e)
                 {
-                    //TODO send failure packet to client
+                    WRAPPER.sendTo(new NBTResultPacket(e.toString()), ctx.getServerHandler().player);
                 }
             });
             return null;
@@ -150,10 +153,9 @@ public class Network
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(NBTResultPacket packet, MessageContext ctx)
         {
-            if (!"".equals(packet.errorMessage))
-            {
-                //TODO show error
-            }
+            String s = packet.errorMessage;
+            if (s.equals("")) NBTGUI.setSuccess();
+            else NBTGUI.setError(s);
             return null;
         }
     }
