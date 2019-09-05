@@ -92,6 +92,7 @@ public class NBTGUI extends GUIScreen
             GUIElement element = log.get(i);
             element.y = (double) i * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height;
         }
+        log.recalc();
     }
 
     @SubscribeEvent
