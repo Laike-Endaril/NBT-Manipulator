@@ -25,7 +25,7 @@ import java.util.ArrayList;
 public class NBTGUI extends GUIScreen
 {
     public static final int MODE_ITEM = 0;
-    private static final Color BLACK = new Color(0xEE);
+    private static final Color BLACK = new Color(0xCC);
 
     public static final NBTGUI GUI = new NBTGUI();
 
