@@ -11,7 +11,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.io.IOException;
 
-@Mod(modid = NBTManipulator.MODID, name = NBTManipulator.NAME, version = NBTManipulator.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.021d,)")
+@Mod(modid = NBTManipulator.MODID, name = NBTManipulator.NAME, version = NBTManipulator.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.021i,)")
 public class NBTManipulator
 {
     public static final String MODID = "nbtmanipulator";

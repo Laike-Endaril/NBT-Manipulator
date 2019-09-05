@@ -2,6 +2,8 @@ package com.fantasticsource.nbtmanipulator;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
@@ -105,9 +107,12 @@ public class Network
                 try
                 {
                     NBTTagCompound compound = JsonToNBT.getTagFromJson(packet.compoundString);
-                    System.out.println(new ItemStack(compound).isEmpty());
-                    ctx.getServerHandler().player.getHeldItemMainhand().deserializeNBT(compound);
-                    System.out.println(ctx.getServerHandler().player.getHeldItemMainhand().getDisplayName());
+                    if (Item.getByNameOrId(compound.getString("id")) == null) throw new IllegalArgumentException("Item ID not found: " + compound.getString("id"));
+
+                    InventoryPlayer inv = ctx.getServerHandler().player.inventory;
+                    inv.setInventorySlotContents(inv.currentItem, new ItemStack(compound));
+
+                    //Success
                     WRAPPER.sendTo(new NBTResultPacket(""), ctx.getServerHandler().player);
                 }
                 catch (Exception e)
