@@ -98,6 +98,7 @@ public class NBTGUI extends GUIScreen
 
         code.y = saveButton.height;
         code.height = 2d / 3 - code.y;
+        code.recalc();
 
         for (int i = 1; i < log.size(); i++)
         {
