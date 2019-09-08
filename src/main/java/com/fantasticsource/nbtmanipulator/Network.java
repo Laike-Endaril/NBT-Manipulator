@@ -7,6 +7,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -102,7 +103,10 @@ public class Network
         @Override
         public IMessage onMessage(NBTSavePacket packet, MessageContext ctx)
         {
-            FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() ->
+            MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+            if (!Commands.INSTANCE.checkPermission(server, ctx.getServerHandler().player)) return null;
+
+            server.addScheduledTask(() ->
             {
                 try
                 {

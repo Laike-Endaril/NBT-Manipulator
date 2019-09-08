@@ -13,6 +13,17 @@ import java.util.List;
 
 public class Commands extends CommandBase
 {
+    public static final Commands INSTANCE;
+
+    static
+    {
+        INSTANCE = new Commands();
+    }
+
+    private Commands()
+    {
+    }
+
     @Override
     public String getName()
     {
