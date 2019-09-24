@@ -3,14 +3,14 @@ package com.fantasticsource.nbtmanipulator;
 import com.fantasticsource.mctools.MCTools;
 import com.fantasticsource.mctools.gui.GUILeftClickEvent;
 import com.fantasticsource.mctools.gui.GUIScreen;
-import com.fantasticsource.mctools.gui.guielements.GUIElement;
-import com.fantasticsource.mctools.gui.guielements.GUIVerticalScrollbar;
-import com.fantasticsource.mctools.gui.guielements.rect.GUIGradientRect;
-import com.fantasticsource.mctools.gui.guielements.rect.text.GUITextButton;
-import com.fantasticsource.mctools.gui.guielements.rect.text.GUITextInputRect;
-import com.fantasticsource.mctools.gui.guielements.rect.text.GUITextRect;
-import com.fantasticsource.mctools.gui.guielements.rect.text.MultilineTextInput;
-import com.fantasticsource.mctools.gui.guielements.rect.view.GUIRectScrollView;
+import com.fantasticsource.mctools.gui.element.GUIElement;
+import com.fantasticsource.mctools.gui.element.other.GUIGradient;
+import com.fantasticsource.mctools.gui.element.other.GUIVerticalScrollbar;
+import com.fantasticsource.mctools.gui.element.text.GUIText;
+import com.fantasticsource.mctools.gui.element.text.GUITextButton;
+import com.fantasticsource.mctools.gui.element.text.GUITextInput;
+import com.fantasticsource.mctools.gui.element.text.MultilineTextInput;
+import com.fantasticsource.mctools.gui.element.view.GUIScrollView;
 import com.fantasticsource.tools.datastructures.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
@@ -33,7 +33,7 @@ public class NBTGUI extends GUIScreen
     private static GUITextButton saveButton, cancelButton;
     private static MultilineTextInput code;
     private static GUIVerticalScrollbar codeScroll;
-    private static GUIRectScrollView log;
+    private static GUIScrollView log;
 
     static
     {
@@ -63,7 +63,7 @@ public class NBTGUI extends GUIScreen
     protected void init()
     {
         //Background
-        guiElements.add(new GUIGradientRect(this, 0, 0, 1, 1, BLACK, BLACK, BLACK, BLACK));
+        guiElements.add(new GUIGradient(this, 0, 0, 1, 1, BLACK, BLACK, BLACK, BLACK));
 
 
         //Buttons
@@ -84,7 +84,7 @@ public class NBTGUI extends GUIScreen
 
         //Error log
         y = code.y + code.height;
-        log = new GUIRectScrollView(this, 0, y, 1, 1 - y);
+        log = new GUIScrollView(this, 0, y, 1, 1 - y);
         guiElements.add(log);
         GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(this, 0.97, 2d / 3, 0.03, 1d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
         guiElements.add(scrollbar);
@@ -118,7 +118,7 @@ public class NBTGUI extends GUIScreen
             StringBuilder s = new StringBuilder();
             for (int i = 0; i < code.size(); i++)
             {
-                s.append(((GUITextInputRect) code.get(i)).text.trim());
+                s.append(((GUITextInput) code.get(i)).text.trim());
             }
             try
             {
@@ -137,11 +137,11 @@ public class NBTGUI extends GUIScreen
     {
         GUI.guiElements.remove(log);
         double y = code.y + code.height;
-        log = new GUIRectScrollView(GUI, 0, y, 1, 1 - y);
+        log = new GUIScrollView(GUI, 0, y, 1, 1 - y);
         GUI.guiElements.add(log);
         for (String err : error.replaceAll("\r", "").split("\n"))
         {
-            log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, err, Color.RED));
+            log.add(new GUIText(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, err, Color.RED));
         }
         log.recalc();
     }
@@ -150,9 +150,9 @@ public class NBTGUI extends GUIScreen
     {
         GUI.guiElements.remove(log);
         double y = code.y + code.height;
-        log = new GUIRectScrollView(GUI, 0, y, 1, 1 - y);
+        log = new GUIScrollView(GUI, 0, y, 1, 1 - y);
         GUI.guiElements.add(log);
-        log.add(new GUITextRect(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "Item successfully saved!", Color.GREEN));
+        log.add(new GUIText(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "Item successfully saved!", Color.GREEN));
         log.recalc();
     }
 }
