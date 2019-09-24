@@ -52,10 +52,10 @@ public class NBTGUI extends GUIScreen
         double y = saveButton.height;
         GUI.guiElements.remove(codeScroll);
         GUI.guiElements.remove(code);
-        code = new MultilineTextInput(GUI, 0, y, 1, 2d / 3 - y, lines.toArray(new String[0]));
+        code = new MultilineTextInput(GUI, 0, y, 0.98, 2d / 3 - y, lines.toArray(new String[0]));
         GUI.guiElements.add(code);
         code.get(0).setActive(true);
-        codeScroll = new GUIVerticalScrollbar(GUI, 0.97, 0, 0.03, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
+        codeScroll = new GUIVerticalScrollbar(GUI, 0.98, 0, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
         GUI.guiElements.add(codeScroll);
     }
 
@@ -75,18 +75,18 @@ public class NBTGUI extends GUIScreen
 
         //Multiline Text Input
         double y = saveButton.height;
-        code = new MultilineTextInput(this, 0, y, 1, 2d / 3 - y, lines.toArray(new String[0]));
+        code = new MultilineTextInput(this, 0, y, 0.98, 2d / 3 - y, lines.toArray(new String[0]));
         guiElements.add(code);
         code.get(0).setActive(true);
-        codeScroll = new GUIVerticalScrollbar(this, 0.97, 0, 0.03, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
+        codeScroll = new GUIVerticalScrollbar(this, 0.98, 0, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
         guiElements.add(codeScroll);
 
 
         //Error log
         y = code.y + code.height;
-        log = new GUIScrollView(this, 0, y, 1, 1 - y);
+        log = new GUIScrollView(this, 0, y, 0.98, 1 - y);
         guiElements.add(log);
-        GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(this, 0.97, 2d / 3, 0.03, 1d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
+        GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(this, 0.98, 2d / 3, 0.02, 1d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
         guiElements.add(scrollbar);
     }
 
