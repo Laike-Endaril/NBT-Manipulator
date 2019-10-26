@@ -45,7 +45,6 @@ public class NBTGUI extends GUIScreen
     {
         lines = MCTools.legibleNBT(nbtString);
         Minecraft.getMinecraft().displayGuiScreen(GUI);
-        Keyboard.enableRepeatEvents(true);
 
 
         //Multiline Text Input
