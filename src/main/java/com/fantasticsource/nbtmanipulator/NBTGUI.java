@@ -18,7 +18,6 @@ import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.lwjgl.input.Keyboard;
 
 import java.util.ArrayList;
 
@@ -56,6 +55,12 @@ public class NBTGUI extends GUIScreen
         code.get(0).setActive(true);
         codeScroll = new GUIVerticalScrollbar(GUI, 0.98, 0, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
         GUI.root.add(codeScroll);
+    }
+
+    @Override
+    public String title()
+    {
+        return "NBT Manipulator";
     }
 
     @Override
@@ -97,14 +102,14 @@ public class NBTGUI extends GUIScreen
 
         code.y = saveButton.height;
         code.height = 2d / 3 - code.y;
-        code.recalc();
+        code.recalc(0);
 
         for (int i = 1; i < log.size(); i++)
         {
             GUIElement element = log.get(i);
             element.y = (double) i * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height;
         }
-        log.recalc();
+        log.recalc(0);
     }
 
     @SubscribeEvent
@@ -142,7 +147,7 @@ public class NBTGUI extends GUIScreen
         {
             log.add(new GUIText(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, err, Color.RED));
         }
-        log.recalc();
+        log.recalc(0);
     }
 
     public static void setSuccess()
@@ -152,6 +157,6 @@ public class NBTGUI extends GUIScreen
         log = new GUIScrollView(GUI, 0, y, 1, 1 - y);
         GUI.root.add(log);
         log.add(new GUIText(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "Item successfully saved!", Color.GREEN));
-        log.recalc();
+        log.recalc(0);
     }
 }
