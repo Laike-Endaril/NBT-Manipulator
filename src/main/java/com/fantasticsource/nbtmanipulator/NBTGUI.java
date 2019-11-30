@@ -46,11 +46,41 @@ public class NBTGUI extends GUIScreen
         Minecraft.getMinecraft().displayGuiScreen(GUI);
 
 
+        GUI.root.clear();
+
+        //Background
+        GUI.root.add(new GUIGradient(GUI, 0, 0, 1, 1, BLACK, BLACK, BLACK, BLACK));
+
+
+        //Buttons
+        saveButton = new GUITextButton(GUI, 0, 0, "Save", Color.GREEN.copy().setAF(0.7f));
+        GUI.root.add(saveButton);
+        cancelButton = new GUITextButton(GUI, saveButton.x + saveButton.width, 0, "Close", Color.RED.copy().setAF(0.7f));
+        GUI.root.add(cancelButton);
+
+
         //Multiline Text Input
         double y = saveButton.height;
+        code = new CodeInput(GUI, 0, y, 0.98, 2d / 3 - y, lines.toArray(new String[0]));
+        GUI.root.add(code);
+        code.get(0).setActive(true);
+        codeScroll = new GUIVerticalScrollbar(GUI, 0.98, 0, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
+        GUI.root.add(codeScroll);
+
+
+        //Error log
+        y = code.y + code.height;
+        log = new GUIScrollView(GUI, 0, y, 0.98, 1 - y);
+        GUI.root.add(log);
+        GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(GUI, 0.98, 2d / 3, 0.02, 1d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
+        GUI.root.add(scrollbar);
+
+
+        //Multiline Text Input
+        double yy = saveButton.height;
         GUI.root.remove(codeScroll);
         GUI.root.remove(code);
-        code = new CodeInput(GUI, 0, y, 0.98, 2d / 3 - y, lines.toArray(new String[0]));
+        code = new CodeInput(GUI, 0, yy, 0.98, 2d / 3 - yy, lines.toArray(new String[0]));
         GUI.root.add(code);
         code.get(0).setActive(true);
         codeScroll = new GUIVerticalScrollbar(GUI, 0.98, 0, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
@@ -66,32 +96,6 @@ public class NBTGUI extends GUIScreen
     @Override
     protected void init()
     {
-        //Background
-        root.add(new GUIGradient(this, 0, 0, 1, 1, BLACK, BLACK, BLACK, BLACK));
-
-
-        //Buttons
-        saveButton = new GUITextButton(this, 0, 0, "Save", Color.GREEN.copy().setAF(0.7f));
-        root.add(saveButton);
-        cancelButton = new GUITextButton(this, saveButton.x + saveButton.width, 0, "Close", Color.RED.copy().setAF(0.7f));
-        root.add(cancelButton);
-
-
-        //Multiline Text Input
-        double y = saveButton.height;
-        code = new CodeInput(this, 0, y, 0.98, 2d / 3 - y, lines.toArray(new String[0]));
-        root.add(code);
-        code.get(0).setActive(true);
-        codeScroll = new GUIVerticalScrollbar(this, 0.98, 0, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
-        root.add(codeScroll);
-
-
-        //Error log
-        y = code.y + code.height;
-        log = new GUIScrollView(this, 0, y, 0.98, 1 - y);
-        root.add(log);
-        GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(this, 0.98, 2d / 3, 0.02, 1d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
-        root.add(scrollbar);
     }
 
     @Override
