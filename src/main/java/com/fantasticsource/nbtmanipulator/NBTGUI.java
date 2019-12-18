@@ -126,7 +126,7 @@ public class NBTGUI extends GUIScreen
             StringBuilder s = new StringBuilder();
             for (int i = 0; i < code.size(); i++)
             {
-                s.append(((GUITextInput) code.get(i)).text.trim());
+                s.append(((GUITextInput) code.get(i)).getText().trim());
             }
             try
             {
