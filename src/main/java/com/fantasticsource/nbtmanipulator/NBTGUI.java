@@ -52,38 +52,29 @@ public class NBTGUI extends GUIScreen
 
 
         //Buttons
-        saveButton = new GUITextButton(GUI, 0, 0, "Save", Color.GREEN.copy().setAF(0.7f));
+        saveButton = new GUITextButton(GUI, "Save", Color.GREEN);
         GUI.root.add(saveButton);
-        cancelButton = new GUITextButton(GUI, saveButton.x + saveButton.width, 0, "Close", Color.RED.copy().setAF(0.7f));
+        cancelButton = new GUITextButton(GUI, "Close", Color.RED);
         GUI.root.add(cancelButton);
 
 
-        //Multiline Text Input
-        double y = saveButton.height;
-        code = new CodeInput(GUI, 0, y, 0.98, 2d / 3 - y, lines.toArray(new String[0]));
+        //Code input
+        code = new CodeInput(GUI, 0.98, 2d / 3, lines.toArray(new String[0]));
         GUI.root.add(code);
         code.get(0).setActive(true);
-        codeScroll = new GUIVerticalScrollbar(GUI, 0.98, 0, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
+        codeScroll = new GUIVerticalScrollbar(GUI, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
         GUI.root.add(codeScroll);
 
 
         //Error log
-        y = code.y + code.height;
-        log = new GUIScrollView(GUI, 0, y, 0.98, 1 - y);
+        log = new GUIScrollView(GUI, 0.98, 1 - (code.y + code.height));
         GUI.root.add(log);
-        GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(GUI, 0.98, 2d / 3, 0.02, 1d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
+        GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(GUI, 0.02, 1 - (code.y + code.height), Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
         GUI.root.add(scrollbar);
 
 
-        //Multiline Text Input
-        double yy = saveButton.height;
-        GUI.root.remove(codeScroll);
-        GUI.root.remove(code);
-        code = new CodeInput(GUI, 0, yy, 0.98, 2d / 3 - yy, lines.toArray(new String[0]));
-        GUI.root.add(code);
-        code.get(0).setActive(true);
-        codeScroll = new GUIVerticalScrollbar(GUI, 0.98, 0, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
-        GUI.root.add(codeScroll);
+        //Warning
+        setError("WARNING!!!\nLooking at the NBT should never cause an issue, but editing and saving can cause crashes and world corruption if you don't know what you're doing!  Use at your own risk!  World backup suggested!");
     }
 
     @Override
@@ -142,10 +133,7 @@ public class NBTGUI extends GUIScreen
 
     public static void setError(String error)
     {
-        GUI.root.remove(log);
-        double y = code.y + code.height;
-        log = new GUIScrollView(GUI, 0, y, 1, 1 - y);
-        GUI.root.add(log);
+        log.clear();
         for (String err : error.replaceAll("\r", "").split("\n"))
         {
             log.add(new GUIText(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, err, Color.RED));
@@ -155,10 +143,7 @@ public class NBTGUI extends GUIScreen
 
     public static void setSuccess()
     {
-        GUI.root.remove(log);
-        double y = code.y + code.height;
-        log = new GUIScrollView(GUI, 0, y, 1, 1 - y);
-        GUI.root.add(log);
+        log.clear();
         log.add(new GUIText(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "Item successfully saved!", Color.GREEN));
         log.recalc(0);
     }
