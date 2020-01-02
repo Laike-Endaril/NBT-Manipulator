@@ -4,7 +4,7 @@ import com.fantasticsource.mctools.MCTools;
 import com.fantasticsource.mctools.gui.GUILeftClickEvent;
 import com.fantasticsource.mctools.gui.GUIScreen;
 import com.fantasticsource.mctools.gui.element.GUIElement;
-import com.fantasticsource.mctools.gui.element.other.GUIGradient;
+import com.fantasticsource.mctools.gui.element.other.GUIDarkenedBackground;
 import com.fantasticsource.mctools.gui.element.other.GUIVerticalScrollbar;
 import com.fantasticsource.mctools.gui.element.text.CodeInput;
 import com.fantasticsource.mctools.gui.element.text.GUIText;
@@ -24,7 +24,6 @@ import java.util.ArrayList;
 public class NBTGUI extends GUIScreen
 {
     public static final int MODE_ITEM = 0;
-    private static final Color BLACK = new Color(0xCC);
 
     public static final NBTGUI GUI = new NBTGUI();
 
@@ -49,7 +48,7 @@ public class NBTGUI extends GUIScreen
         GUI.root.clear();
 
         //Background
-        GUI.root.add(new GUIGradient(GUI, 0, 0, 1, 1, BLACK, BLACK, BLACK, BLACK));
+        GUI.root.add(new GUIDarkenedBackground(GUI));
 
 
         //Buttons
