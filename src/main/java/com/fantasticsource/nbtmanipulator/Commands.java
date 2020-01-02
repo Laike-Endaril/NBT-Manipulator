@@ -5,11 +5,6 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Commands extends CommandBase
 {
@@ -33,7 +28,7 @@ public class Commands extends CommandBase
     @Override
     public String getUsage(ICommandSender sender)
     {
-        return "Usage: /nbtman hand";
+        return "Usage: /nbtman";
     }
 
     @Override
@@ -41,29 +36,11 @@ public class Commands extends CommandBase
     {
         if (args.length == 0)
         {
-            sender.sendMessage(new TextComponentString(getUsage(sender)));
-            return;
+            if (sender instanceof EntityPlayerMP)
+            {
+                ItemStack stack = ((EntityPlayerMP) sender).getHeldItemMainhand();
+                Network.WRAPPER.sendTo(new Network.NBTGUIPacket(stack), (EntityPlayerMP) sender);
+            }
         }
-
-        switch (args[0])
-        {
-            case "hand":
-                if (sender instanceof EntityPlayerMP)
-                {
-                    ItemStack stack = ((EntityPlayerMP) sender).getHeldItemMainhand();
-                    Network.WRAPPER.sendTo(new Network.NBTGUIPacket(stack), (EntityPlayerMP) sender);
-                }
-                break;
-
-            default:
-                sender.sendMessage(new TextComponentString(getUsage(sender)));
-        }
-    }
-
-    @Override
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos)
-    {
-        if (args.length == 1) return getListOfStringsMatchingLastWord(args, "hand");
-        return new ArrayList<>();
     }
 }
