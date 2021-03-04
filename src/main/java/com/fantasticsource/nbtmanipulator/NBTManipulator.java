@@ -115,11 +115,11 @@ public class NBTManipulator
             if (!compound.hasNoTags())
             {
                 World world = target.world;
-                Entity entity = EntityList.createEntityFromNBT((NBTTagCompound) data.newObjectNBT, world);
-                entity.setPosition(target.posX, target.posY, target.posZ);
+                Entity entity = EntityList.createEntityFromNBT(compound, world);
+                if (!compound.hasKey("Pos")) entity.setPosition(target.posX, target.posY, target.posZ);
+                target.setDead();
                 world.spawnEntity(entity);
             }
-            ((Entity) data.oldObject).setDead();
 
             return true;
         });

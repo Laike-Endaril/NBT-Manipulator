@@ -23,13 +23,11 @@ import java.util.ArrayList;
 
 public class NBTGUI extends GUIScreen
 {
-    public static final NBTGUI GUI = new NBTGUI();
-
-    private static ArrayList<String> lines;
-    private static GUITextButton saveButton, cancelButton;
-    private static CodeInput code;
-    private static GUIVerticalScrollbar codeScroll;
-    private static GUIScrollView log;
+    protected ArrayList<String> lines;
+    protected GUITextButton saveButton, cancelButton;
+    protected CodeInput code;
+    protected GUIVerticalScrollbar codeScroll;
+    protected GUIScrollView log;
 
     static
     {
@@ -37,38 +35,36 @@ public class NBTGUI extends GUIScreen
     }
 
 
-    public static void show(String nbtString)
+    public NBTGUI(String nbtString)
     {
         lines = MCTools.legibleNBT(nbtString);
-        Minecraft.getMinecraft().displayGuiScreen(GUI);
+        show();
 
-
-        GUI.root.clear();
 
         //Background
-        GUI.root.add(new GUIDarkenedBackground(GUI));
+        root.add(new GUIDarkenedBackground(this));
 
 
         //Buttons
-        saveButton = new GUITextButton(GUI, "Save", Color.GREEN);
-        GUI.root.add(saveButton);
-        cancelButton = new GUITextButton(GUI, "Close", Color.RED);
-        GUI.root.add(cancelButton);
+        saveButton = new GUITextButton(this, "Save", Color.GREEN);
+        root.add(saveButton);
+        cancelButton = new GUITextButton(this, "Close", Color.RED);
+        root.add(cancelButton);
 
 
         //Code input
-        code = new CodeInput(GUI, 0.98, 2d / 3, lines.toArray(new String[0]));
-        GUI.root.add(code);
+        code = new CodeInput(this, 0.98, 2d / 3, lines.toArray(new String[0]));
+        root.add(code);
         code.get(0).setActive(true);
-        codeScroll = new GUIVerticalScrollbar(GUI, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
-        GUI.root.add(codeScroll);
+        codeScroll = new GUIVerticalScrollbar(this, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
+        root.add(codeScroll);
 
 
         //Error log
-        log = new GUIScrollView(GUI, 0.98, 1 - (code.y + code.height));
-        GUI.root.add(log);
-        GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(GUI, 0.02, 1 - (code.y + code.height), Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
-        GUI.root.add(scrollbar);
+        log = new GUIScrollView(this, 0.98, 1 - (code.y + code.height));
+        root.add(log);
+        GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(this, 0.02, 1 - (code.y + code.height), Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
+        root.add(scrollbar);
 
 
         //Warning
@@ -99,7 +95,7 @@ public class NBTGUI extends GUIScreen
         for (int i = 1; i < log.size(); i++)
         {
             GUIElement element = log.get(i);
-            element.y = (double) i * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height;
+            element.y = (double) i * FONT_RENDERER.FONT_HEIGHT / height / log.height;
         }
         log.recalc(0);
     }
@@ -107,14 +103,18 @@ public class NBTGUI extends GUIScreen
     @SubscribeEvent
     public static void click(GUILeftClickEvent event)
     {
+        if (!(Minecraft.getMinecraft().currentScreen instanceof NBTGUI)) return;
+
+
+        NBTGUI gui = (NBTGUI) Minecraft.getMinecraft().currentScreen;
         GUIElement element = event.getElement();
-        if (element == cancelButton) GUI.close();
-        else if (element == saveButton)
+        if (element == gui.cancelButton) gui.close();
+        else if (element == gui.saveButton)
         {
             StringBuilder s = new StringBuilder();
-            for (int i = 0; i < code.size(); i++)
+            for (int i = 0; i < gui.code.size(); i++)
             {
-                s.append(((GUITextInput) code.get(i)).getText().trim());
+                s.append(((GUITextInput) gui.code.get(i)).getText().trim());
             }
             try
             {
@@ -131,18 +131,26 @@ public class NBTGUI extends GUIScreen
 
     public static void setError(String error)
     {
-        log.clear();
+        if (!(Minecraft.getMinecraft().currentScreen instanceof NBTGUI)) return;
+
+
+        NBTGUI gui = (NBTGUI) Minecraft.getMinecraft().currentScreen;
+        gui.log.clear();
         for (String err : error.replaceAll("\r", "").split("\n"))
         {
-            log.add(new GUIText(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, err, Color.RED));
+            gui.log.add(new GUIText(gui, 0, (double) gui.log.size() * FONT_RENDERER.FONT_HEIGHT / gui.height / gui.log.height, err, Color.RED));
         }
-        log.recalc(0);
+        gui.log.recalc(0);
     }
 
     public static void setSuccess()
     {
-        log.clear();
-        log.add(new GUIText(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "Object successfully saved!", Color.GREEN));
-        log.recalc(0);
+        if (!(Minecraft.getMinecraft().currentScreen instanceof NBTGUI)) return;
+
+
+        NBTGUI gui = (NBTGUI) Minecraft.getMinecraft().currentScreen;
+        gui.log.clear();
+        gui.log.add(new GUIText(gui, 0, (double) gui.log.size() * FONT_RENDERER.FONT_HEIGHT / gui.height / gui.log.height, "Object successfully saved!", Color.GREEN));
+        gui.log.recalc(0);
     }
 }

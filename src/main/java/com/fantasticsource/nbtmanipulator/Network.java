@@ -60,7 +60,7 @@ public class Network
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(NBTGUIPacket packet, MessageContext ctx)
         {
-            Minecraft.getMinecraft().addScheduledTask(() -> NBTGUI.show(packet.nbtString));
+            Minecraft.getMinecraft().addScheduledTask(() -> new NBTGUI(packet.nbtString));
             return null;
         }
     }
