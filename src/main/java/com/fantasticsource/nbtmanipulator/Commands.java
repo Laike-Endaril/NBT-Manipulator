@@ -4,6 +4,7 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 
 public class Commands extends CommandBase
@@ -38,8 +39,12 @@ public class Commands extends CommandBase
         {
             if (sender instanceof EntityPlayerMP)
             {
-                ItemStack stack = ((EntityPlayerMP) sender).getHeldItemMainhand();
-                Network.WRAPPER.sendTo(new Network.NBTGUIPacket(stack), (EntityPlayerMP) sender);
+                EntityPlayerMP player = (EntityPlayerMP) sender;
+                NBTManipulator.startEditing((EntityPlayerMP) sender, ((EntityPlayerMP) sender).getHeldItemMainhand(), data ->
+                {
+                    player.inventory.setInventorySlotContents(player.inventory.currentItem, new ItemStack((NBTTagCompound) data.newObjectNBT));
+                    return true;
+                });
             }
         }
     }

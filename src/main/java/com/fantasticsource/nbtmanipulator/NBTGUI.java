@@ -23,8 +23,6 @@ import java.util.ArrayList;
 
 public class NBTGUI extends GUIScreen
 {
-    public static final int MODE_ITEM = 0;
-
     public static final NBTGUI GUI = new NBTGUI();
 
     private static ArrayList<String> lines;
@@ -39,7 +37,7 @@ public class NBTGUI extends GUIScreen
     }
 
 
-    public static void show(int mode, String nbtString)
+    public static void show(String nbtString)
     {
         lines = MCTools.legibleNBT(nbtString);
         Minecraft.getMinecraft().displayGuiScreen(GUI);

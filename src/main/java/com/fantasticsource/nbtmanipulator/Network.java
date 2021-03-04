@@ -2,12 +2,9 @@ package com.fantasticsource.nbtmanipulator;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -16,8 +13,6 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
-import static com.fantasticsource.nbtmanipulator.NBTGUI.MODE_ITEM;
 
 public class Network
 {
@@ -34,29 +29,28 @@ public class Network
 
     public static class NBTGUIPacket implements IMessage
     {
-        ItemStack copy;
-        String serializedNBT;
+        String nbtString;
 
         public NBTGUIPacket()
         {
             //Required
         }
 
-        public NBTGUIPacket(ItemStack stack)
+        public NBTGUIPacket(INBTSerializable object)
         {
-            copy = stack.copy();
+            nbtString = object.serializeNBT().toString();
         }
 
         @Override
         public void toBytes(ByteBuf buf)
         {
-            ByteBufUtils.writeUTF8String(buf, copy.serializeNBT().toString());
+            ByteBufUtils.writeUTF8String(buf, nbtString);
         }
 
         @Override
         public void fromBytes(ByteBuf buf)
         {
-            serializedNBT = ByteBufUtils.readUTF8String(buf);
+            nbtString = ByteBufUtils.readUTF8String(buf);
         }
     }
 
@@ -66,35 +60,35 @@ public class Network
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(NBTGUIPacket packet, MessageContext ctx)
         {
-            Minecraft.getMinecraft().addScheduledTask(() -> NBTGUI.show(MODE_ITEM, packet.serializedNBT));
+            Minecraft.getMinecraft().addScheduledTask(() -> NBTGUI.show(packet.nbtString));
             return null;
         }
     }
 
     public static class NBTSavePacket implements IMessage
     {
-        String compoundString;
+        String nbtString;
 
         public NBTSavePacket()
         {
             //Required
         }
 
-        public NBTSavePacket(String compoundString)
+        public NBTSavePacket(String nbtString)
         {
-            this.compoundString = compoundString;
+            this.nbtString = nbtString;
         }
 
         @Override
         public void toBytes(ByteBuf buf)
         {
-            ByteBufUtils.writeUTF8String(buf, compoundString);
+            ByteBufUtils.writeUTF8String(buf, nbtString);
         }
 
         @Override
         public void fromBytes(ByteBuf buf)
         {
-            compoundString = ByteBufUtils.readUTF8String(buf);
+            nbtString = ByteBufUtils.readUTF8String(buf);
         }
     }
 
@@ -104,26 +98,10 @@ public class Network
         public IMessage onMessage(NBTSavePacket packet, MessageContext ctx)
         {
             MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-            if (!Commands.INSTANCE.checkPermission(server, ctx.getServerHandler().player)) return null;
+            EntityPlayerMP player = ctx.getServerHandler().player;
+            if (!Commands.INSTANCE.checkPermission(server, player)) return null;
 
-            server.addScheduledTask(() ->
-            {
-                try
-                {
-                    NBTTagCompound compound = JsonToNBT.getTagFromJson(packet.compoundString);
-                    if (Item.getByNameOrId(compound.getString("id")) == null) throw new IllegalArgumentException("Item ID not found: " + compound.getString("id"));
-
-                    InventoryPlayer inv = ctx.getServerHandler().player.inventory;
-                    inv.setInventorySlotContents(inv.currentItem, new ItemStack(compound));
-
-                    //Success
-                    WRAPPER.sendTo(new NBTResultPacket(""), ctx.getServerHandler().player);
-                }
-                catch (Exception e)
-                {
-                    WRAPPER.sendTo(new NBTResultPacket(e.toString()), ctx.getServerHandler().player);
-                }
-            });
+            server.addScheduledTask(() -> NBTManipulator.save(player, packet.nbtString));
             return null;
         }
     }
