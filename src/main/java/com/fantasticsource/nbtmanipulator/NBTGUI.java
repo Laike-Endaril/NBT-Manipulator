@@ -142,7 +142,7 @@ public class NBTGUI extends GUIScreen
     public static void setSuccess()
     {
         log.clear();
-        log.add(new GUIText(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "Item successfully saved!", Color.GREEN));
+        log.add(new GUIText(GUI, 0, (double) log.size() * FONT_RENDERER.FONT_HEIGHT / GUI.height / log.height, "Object successfully saved!", Color.GREEN));
         log.recalc(0);
     }
 }

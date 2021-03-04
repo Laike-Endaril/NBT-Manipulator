@@ -1,9 +1,15 @@
 package com.fantasticsource.nbtmanipulator;
 
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
+import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -52,15 +58,6 @@ public class NBTManipulator
         EDITING_TARGETS.remove(event.player);
     }
 
-    /**
-     * @param callback is a function which will run it's "test()" method when the edited nbt is received.  The original object and the new NBTBase can be accessed from the NBTEditingData.  It also contains an "error" string which can be set to anything besides empty to show an editing error
-     */
-    public static void startEditing(EntityPlayerMP editor, INBTSerializable object, Predicate<NBTEditingData> callback)
-    {
-        EDITING_TARGETS.put(editor, new NBTEditingData(object, callback));
-        WRAPPER.sendTo(new Network.NBTGUIPacket(object), editor);
-    }
-
     public static void save(EntityPlayerMP editor, String nbtString)
     {
         try
@@ -73,5 +70,67 @@ public class NBTManipulator
         {
             WRAPPER.sendTo(new Network.NBTResultPacket(e.toString()), editor);
         }
+    }
+
+
+    /**
+     * @param callback is a function which will run it's "test()" method when the edited nbt is received.  The original object and the new NBTBase can be accessed from the NBTEditingData.  It also contains an "error" string which can be set to anything besides empty to show an editing error
+     */
+    public static void startEditing(EntityPlayerMP editor, INBTSerializable object, Predicate<NBTEditingData> callback)
+    {
+        EDITING_TARGETS.put(editor, new NBTEditingData(object, callback));
+        WRAPPER.sendTo(new Network.NBTGUIPacket(object), editor);
+    }
+
+    protected static void hand(EntityPlayerMP editor)
+    {
+        startEditing(editor, editor.getHeldItemMainhand(), data ->
+        {
+            editor.inventory.setInventorySlotContents(editor.inventory.currentItem, new ItemStack((NBTTagCompound) data.newObjectNBT));
+            return true;
+        });
+    }
+
+    protected static void self(EntityPlayerMP editor)
+    {
+        player(editor, editor);
+    }
+
+    protected static void nearest(EntityPlayerMP editor)
+    {
+        entity(editor, editor.world.findNearestEntityWithinAABB(Entity.class, editor.getEntityBoundingBox().grow(100), editor));
+    }
+
+    protected static void entity(EntityPlayerMP editor, Entity target)
+    {
+        if (target instanceof EntityPlayerMP && !(target instanceof FakePlayer))
+        {
+            player(editor, (EntityPlayerMP) target);
+            return;
+        }
+
+        startEditing(editor, target, data ->
+        {
+            NBTTagCompound compound = (NBTTagCompound) data.newObjectNBT;
+            if (!compound.hasNoTags())
+            {
+                World world = target.world;
+                Entity entity = EntityList.createEntityFromNBT((NBTTagCompound) data.newObjectNBT, world);
+                entity.setPosition(target.posX, target.posY, target.posZ);
+                world.spawnEntity(entity);
+            }
+            ((Entity) data.oldObject).setDead();
+
+            return true;
+        });
+    }
+
+    protected static void player(EntityPlayerMP editor, EntityPlayerMP target)
+    {
+        startEditing(editor, target, data ->
+        {
+            //TODO
+            return true;
+        });
     }
 }

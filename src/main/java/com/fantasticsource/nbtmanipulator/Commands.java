@@ -3,8 +3,6 @@ package com.fantasticsource.nbtmanipulator;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 
 public class Commands extends CommandBase
@@ -29,23 +27,32 @@ public class Commands extends CommandBase
     @Override
     public String getUsage(ICommandSender sender)
     {
-        return "Usage: /nbtman";
+        return "Usage: /nbtman [hand|self|nearestentity]";
     }
 
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args)
     {
-        if (args.length == 0)
+        if (!(sender instanceof EntityPlayerMP)) return;
+        if (args.length == 0) NBTManipulator.hand((EntityPlayerMP) sender);
+        else
         {
-            if (sender instanceof EntityPlayerMP)
+            switch (args[0])
             {
-                EntityPlayerMP player = (EntityPlayerMP) sender;
-                NBTManipulator.startEditing((EntityPlayerMP) sender, ((EntityPlayerMP) sender).getHeldItemMainhand(), data ->
-                {
-                    player.inventory.setInventorySlotContents(player.inventory.currentItem, new ItemStack((NBTTagCompound) data.newObjectNBT));
-                    return true;
-                });
+                case "hand":
+                    NBTManipulator.hand((EntityPlayerMP) sender);
+                    break;
+
+                case "self":
+                    NBTManipulator.self((EntityPlayerMP) sender);
+                    break;
+
+                case "nearestentity":
+                    NBTManipulator.nearest((EntityPlayerMP) sender);
+                    break;
             }
         }
     }
+
+
 }
