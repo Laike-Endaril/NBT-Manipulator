@@ -21,6 +21,7 @@ public class Commands extends CommandBase
         subcommands.add("hand");
         subcommands.add("self");
         subcommands.add("nearestentity");
+        subcommands.add("nearesttileentity");
     }
 
     private Commands()
@@ -36,7 +37,7 @@ public class Commands extends CommandBase
     @Override
     public String getUsage(ICommandSender sender)
     {
-        return "Usage: /nbtman [hand|self|nearestentity]";
+        return "Usage: /nbtman [hand|self|nearestentity|nearesttileentity]";
     }
 
     @Override
@@ -57,8 +58,11 @@ public class Commands extends CommandBase
                     break;
 
                 case "nearestentity":
-                    NBTManipulator.nearest((EntityPlayerMP) sender);
+                    NBTManipulator.nearestEntity((EntityPlayerMP) sender);
                     break;
+
+                case "nearesttileentity":
+                    NBTManipulator.nearestTileEntity((EntityPlayerMP) sender);
             }
         }
     }

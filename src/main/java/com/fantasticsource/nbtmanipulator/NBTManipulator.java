@@ -5,6 +5,7 @@ import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
@@ -100,9 +101,27 @@ public class NBTManipulator
         player(editor, editor);
     }
 
-    protected static void nearest(EntityPlayerMP editor)
+    protected static void nearestEntity(EntityPlayerMP editor)
     {
         entity(editor, editor.world.findNearestEntityWithinAABB(Entity.class, editor.getEntityBoundingBox().grow(100), editor));
+    }
+
+    protected static void nearestTileEntity(EntityPlayerMP editor)
+    {
+        TileEntity nearest = null;
+        double minDistSqr = Double.MAX_VALUE;
+        double x = editor.posX, y = editor.posY, z = editor.posZ;
+        for (TileEntity te : editor.world.loadedTileEntityList)
+        {
+            double distSqr = te.getDistanceSq(x, y, z);
+            if (distSqr < minDistSqr)
+            {
+                minDistSqr = distSqr;
+                nearest = te;
+            }
+        }
+
+        if (nearest != null) tileEntity(editor, nearest);
     }
 
     protected static void entity(EntityPlayerMP editor, Entity target)
@@ -139,6 +158,15 @@ public class NBTManipulator
     }
 
     protected static void player(EntityPlayerMP editor, EntityPlayerMP target)
+    {
+        startEditing(editor, target, data ->
+        {
+            target.deserializeNBT((NBTTagCompound) data.newObjectNBT);
+            return true;
+        });
+    }
+
+    protected static void tileEntity(EntityPlayerMP editor, TileEntity target)
     {
         startEditing(editor, target, data ->
         {
