@@ -18,6 +18,8 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.function.Predicate;
 
@@ -68,7 +70,9 @@ public class NBTManipulator
         }
         catch (Exception e)
         {
-            WRAPPER.sendTo(new Network.NBTResultPacket(e.toString()), editor);
+            StringWriter stacktrace = new StringWriter();
+            e.printStackTrace(new PrintWriter(stacktrace));
+            WRAPPER.sendTo(new Network.NBTResultPacket(stacktrace.toString().replaceAll("\t", "")), editor);
         }
     }
 
@@ -115,7 +119,16 @@ public class NBTManipulator
             if (!compound.hasNoTags())
             {
                 World world = target.world;
+
+                String id = compound.getString("id");
+                if (id.equals("player") || id.equals("minecraft:player"))
+                {
+                    data.error = "Cannot create player entities!";
+                    return true;
+                }
+
                 Entity entity = EntityList.createEntityFromNBT(compound, world);
+
                 if (!compound.hasKey("Pos")) entity.setPosition(target.posX, target.posY, target.posZ);
                 target.setDead();
                 world.spawnEntity(entity);
@@ -129,7 +142,7 @@ public class NBTManipulator
     {
         startEditing(editor, target, data ->
         {
-            //TODO
+            target.deserializeNBT((NBTTagCompound) data.newObjectNBT);
             return true;
         });
     }
