@@ -148,9 +148,7 @@ public class Network
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(NBTResultPacket packet, MessageContext ctx)
         {
-            String s = packet.errorMessage;
-            if (s.equals("")) NBTGUI.setSuccess();
-            else NBTGUI.setError(s);
+            NBTGUI.setError(packet.errorMessage);
             return null;
         }
     }

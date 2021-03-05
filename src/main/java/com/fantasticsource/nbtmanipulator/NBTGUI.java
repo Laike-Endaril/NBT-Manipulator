@@ -1,7 +1,6 @@
 package com.fantasticsource.nbtmanipulator;
 
 import com.fantasticsource.mctools.MCTools;
-import com.fantasticsource.mctools.gui.GUILeftClickEvent;
 import com.fantasticsource.mctools.gui.GUIScreen;
 import com.fantasticsource.mctools.gui.element.GUIElement;
 import com.fantasticsource.mctools.gui.element.other.GUIDarkenedBackground;
@@ -13,18 +12,14 @@ import com.fantasticsource.mctools.gui.element.text.GUITextInput;
 import com.fantasticsource.mctools.gui.element.view.GUIScrollView;
 import com.fantasticsource.tools.datastructures.Color;
 import net.minecraft.client.Minecraft;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.ArrayList;
 
 public class NBTGUI extends GUIScreen
 {
     protected ArrayList<String> lines;
-    protected GUITextButton saveButton, cancelButton;
+    protected GUITextButton saveButton, closeButton;
     protected CodeInput code;
     protected GUIVerticalScrollbar codeScroll;
     protected GUIScrollView log;
@@ -37,6 +32,11 @@ public class NBTGUI extends GUIScreen
 
     public NBTGUI(String nbtString)
     {
+        this(nbtString, false);
+    }
+
+    public NBTGUI(String nbtString, boolean clientSide)
+    {
         lines = MCTools.legibleNBT(nbtString);
         show();
 
@@ -47,9 +47,28 @@ public class NBTGUI extends GUIScreen
 
         //Buttons
         saveButton = new GUITextButton(this, "Save", Color.GREEN);
+        saveButton.addClickActions(() ->
+        {
+            StringBuilder s = new StringBuilder();
+            for (int i = 0; i < code.size(); i++)
+            {
+                s.append(((GUITextInput) code.get(i)).getText().trim());
+            }
+            try
+            {
+                if (clientSide) ClientCommands.save(s.toString());
+                else Network.WRAPPER.sendToServer(new Network.NBTSavePacket(s.toString()));
+            }
+            catch (Exception e)
+            {
+                setError(e.toString());
+            }
+        });
         root.add(saveButton);
-        cancelButton = new GUITextButton(this, "Close", Color.RED);
-        root.add(cancelButton);
+
+        closeButton = new GUITextButton(this, "Close", Color.RED);
+        closeButton.addClickActions(this::close);
+        root.add(closeButton);
 
 
         //Code input
@@ -86,7 +105,7 @@ public class NBTGUI extends GUIScreen
     public void onResize(Minecraft mcIn, int w, int h)
     {
         super.onResize(mcIn, w, h);
-        cancelButton.x = saveButton.x + saveButton.width;
+        closeButton.x = saveButton.x + saveButton.width;
 
         code.y = saveButton.height;
         code.height = 2d / 3 - code.y;
@@ -100,37 +119,15 @@ public class NBTGUI extends GUIScreen
         log.recalc(0);
     }
 
-    @SubscribeEvent
-    public static void click(GUILeftClickEvent event)
-    {
-        if (!(Minecraft.getMinecraft().currentScreen instanceof NBTGUI)) return;
-
-
-        NBTGUI gui = (NBTGUI) Minecraft.getMinecraft().currentScreen;
-        GUIElement element = event.getElement();
-        if (element == gui.cancelButton) gui.close();
-        else if (element == gui.saveButton)
-        {
-            StringBuilder s = new StringBuilder();
-            for (int i = 0; i < gui.code.size(); i++)
-            {
-                s.append(((GUITextInput) gui.code.get(i)).getText().trim());
-            }
-            try
-            {
-                NBTTagCompound compound = JsonToNBT.getTagFromJson(s.toString());
-                new ItemStack(compound);
-                Network.WRAPPER.sendToServer(new Network.NBTSavePacket(s.toString()));
-            }
-            catch (Exception e)
-            {
-                setError(e.toString());
-            }
-        }
-    }
-
     public static void setError(String error)
     {
+        if (error.equals(""))
+        {
+            setSuccess();
+            return;
+        }
+
+
         if (!(Minecraft.getMinecraft().currentScreen instanceof NBTGUI)) return;
 
 

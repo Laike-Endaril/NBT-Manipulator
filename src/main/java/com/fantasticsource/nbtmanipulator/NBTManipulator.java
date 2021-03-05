@@ -7,17 +7,20 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.relauncher.Side;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -40,6 +43,11 @@ public class NBTManipulator
     {
         Network.init();
         MinecraftForge.EVENT_BUS.register(NBTManipulator.class);
+
+        if (FMLCommonHandler.instance().getEffectiveSide() == Side.CLIENT)
+        {
+            ClientCommandHandler.instance.registerCommand(ClientCommands.INSTANCE);
+        }
     }
 
     @SubscribeEvent
@@ -60,6 +68,7 @@ public class NBTManipulator
     {
         EDITING_TARGETS.remove(event.player);
     }
+
 
     public static void save(EntityPlayerMP editor, String nbtString)
     {
