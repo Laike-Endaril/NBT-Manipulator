@@ -8,7 +8,6 @@ import com.fantasticsource.mctools.gui.element.other.GUIVerticalScrollbar;
 import com.fantasticsource.mctools.gui.element.text.CodeInput;
 import com.fantasticsource.mctools.gui.element.text.GUIText;
 import com.fantasticsource.mctools.gui.element.text.GUITextButton;
-import com.fantasticsource.mctools.gui.element.text.GUITextInput;
 import com.fantasticsource.mctools.gui.element.view.GUIScrollView;
 import com.fantasticsource.tools.datastructures.Color;
 import net.minecraft.client.Minecraft;
@@ -49,15 +48,11 @@ public class NBTGUI extends GUIScreen
         saveButton = new GUITextButton(this, "Save", Color.GREEN);
         saveButton.addClickActions(() ->
         {
-            StringBuilder s = new StringBuilder();
-            for (int i = 0; i < code.size(); i++)
-            {
-                s.append(((GUITextInput) code.get(i)).getText().trim());
-            }
+            String codeString = code.getCodeAsCompressedString();
             try
             {
-                if (clientSide) ClientCommands.save(s.toString());
-                else Network.WRAPPER.sendToServer(new Network.NBTSavePacket(s.toString()));
+                if (clientSide) ClientCommands.save(codeString);
+                else Network.WRAPPER.sendToServer(new Network.NBTSavePacket(codeString));
             }
             catch (Exception e)
             {
