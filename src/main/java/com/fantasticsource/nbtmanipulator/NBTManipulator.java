@@ -34,7 +34,7 @@ public class NBTManipulator
 {
     public static final String MODID = "nbtmanipulator";
     public static final String NAME = "NBT Manipulator";
-    public static final String VERSION = "1.12.2.004b";
+    public static final String VERSION = "1.12.2.004c";
 
     protected static final HashMap<EntityPlayerMP, NBTEditingData> EDITING_TARGETS = new HashMap<>();
 
