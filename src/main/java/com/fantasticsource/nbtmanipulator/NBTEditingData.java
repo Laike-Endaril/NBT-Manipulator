@@ -9,9 +9,9 @@ import java.util.function.Predicate;
 
 public class NBTEditingData
 {
-    protected final INBTSerializable oldObject;
     protected final Predicate<NBTEditingData> callback;
-    protected NBTBase newObjectNBT = null;
+    public final INBTSerializable oldObject;
+    public NBTBase newObjectNBT = null;
     public String error = "";
 
     public NBTEditingData(INBTSerializable oldObject, Predicate<NBTEditingData> callback)
