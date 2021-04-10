@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 public class NBTEditingData
 {
     protected final Predicate<NBTEditingData> callback;
-    public final INBTSerializable oldObject;
+    public INBTSerializable oldObject;
     public NBTBase newObjectNBT = null;
     public String error = "";
 

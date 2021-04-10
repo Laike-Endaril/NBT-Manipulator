@@ -1,12 +1,13 @@
 package com.fantasticsource.nbtmanipulator;
 
+import com.fantasticsource.mctools.MCTools;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
@@ -29,7 +30,7 @@ import java.util.function.Predicate;
 
 import static com.fantasticsource.nbtmanipulator.Network.WRAPPER;
 
-@Mod(modid = NBTManipulator.MODID, name = NBTManipulator.NAME, version = NBTManipulator.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.044zj,)", acceptableRemoteVersions = "*")
+@Mod(modid = NBTManipulator.MODID, name = NBTManipulator.NAME, version = NBTManipulator.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.044zzd,)", acceptableRemoteVersions = "*")
 public class NBTManipulator
 {
     public static final String MODID = "nbtmanipulator";
@@ -100,7 +101,9 @@ public class NBTManipulator
     {
         startEditing(editor, editor.getHeldItemMainhand(), data ->
         {
-            editor.inventory.setInventorySlotContents(editor.inventory.currentItem, new ItemStack((NBTTagCompound) data.newObjectNBT));
+            ItemStack stack = new ItemStack((NBTTagCompound) data.newObjectNBT);
+            editor.inventory.setInventorySlotContents(editor.inventory.currentItem, stack);
+            data.oldObject = stack;
             return true;
         });
     }
@@ -146,7 +149,8 @@ public class NBTManipulator
             NBTTagCompound compound = (NBTTagCompound) data.newObjectNBT;
             if (!compound.hasNoTags())
             {
-                World world = target.world;
+                Entity oldEntity = (Entity) data.oldObject;
+                WorldServer world = (WorldServer) oldEntity.world;
 
                 String id = compound.getString("id");
                 if (id.equals("player") || id.equals("minecraft:player"))
@@ -157,9 +161,11 @@ public class NBTManipulator
 
                 Entity entity = EntityList.createEntityFromNBT(compound, world);
 
-                if (!compound.hasKey("Pos")) entity.setPosition(target.posX, target.posY, target.posZ);
-                target.setDead();
+                if (!compound.hasKey("Pos")) entity.setPosition(oldEntity.posX, oldEntity.posY, oldEntity.posZ);
+
+                MCTools.removeEntityImmediate(oldEntity);
                 world.spawnEntity(entity);
+                data.oldObject = entity;
             }
 
             return true;
