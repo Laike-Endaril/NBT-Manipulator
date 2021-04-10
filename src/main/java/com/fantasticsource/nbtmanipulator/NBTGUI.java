@@ -18,11 +18,11 @@ import java.util.ArrayList;
 
 public class NBTGUI extends GUIScreen
 {
-    protected ArrayList<String> lines;
-    protected GUITextButton saveButton, closeButton;
-    protected CodeInput code;
-    protected GUIVerticalScrollbar codeScroll;
-    protected GUIScrollView log;
+    public ArrayList<String> lines;
+    public GUITextButton saveButton, closeButton;
+    public CodeInput code;
+    public GUIVerticalScrollbar codeScroll;
+    public GUIScrollView log;
 
     static
     {
