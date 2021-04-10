@@ -34,7 +34,7 @@ public class NBTManipulator
 {
     public static final String MODID = "nbtmanipulator";
     public static final String NAME = "NBT Manipulator";
-    public static final String VERSION = "1.12.2.004c";
+    public static final String VERSION = "1.12.2.004d";
 
     protected static final HashMap<EntityPlayerMP, NBTEditingData> EDITING_TARGETS = new HashMap<>();
 
@@ -96,7 +96,7 @@ public class NBTManipulator
         WRAPPER.sendTo(new Network.NBTGUIPacket(object), editor);
     }
 
-    protected static void hand(EntityPlayerMP editor)
+    public static void hand(EntityPlayerMP editor)
     {
         startEditing(editor, editor.getHeldItemMainhand(), data ->
         {
@@ -105,17 +105,17 @@ public class NBTManipulator
         });
     }
 
-    protected static void self(EntityPlayerMP editor)
+    public static void self(EntityPlayerMP editor)
     {
         player(editor, editor);
     }
 
-    protected static void nearestEntity(EntityPlayerMP editor)
+    public static void nearestEntity(EntityPlayerMP editor)
     {
         entity(editor, editor.world.findNearestEntityWithinAABB(Entity.class, editor.getEntityBoundingBox().grow(100), editor));
     }
 
-    protected static void nearestTileEntity(EntityPlayerMP editor)
+    public static void nearestTileEntity(EntityPlayerMP editor)
     {
         TileEntity nearest = null;
         double minDistSqr = Double.MAX_VALUE;
@@ -133,7 +133,7 @@ public class NBTManipulator
         if (nearest != null) tileEntity(editor, nearest);
     }
 
-    protected static void entity(EntityPlayerMP editor, Entity target)
+    public static void entity(EntityPlayerMP editor, Entity target)
     {
         if (target instanceof EntityPlayerMP && !(target instanceof FakePlayer))
         {
@@ -166,7 +166,7 @@ public class NBTManipulator
         });
     }
 
-    protected static void player(EntityPlayerMP editor, EntityPlayerMP target)
+    public static void player(EntityPlayerMP editor, EntityPlayerMP target)
     {
         startEditing(editor, target, data ->
         {
@@ -175,7 +175,7 @@ public class NBTManipulator
         });
     }
 
-    protected static void tileEntity(EntityPlayerMP editor, TileEntity target)
+    public static void tileEntity(EntityPlayerMP editor, TileEntity target)
     {
         startEditing(editor, target, data ->
         {
