@@ -3,7 +3,6 @@ package com.fantasticsource.nbtmanipulator;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -39,14 +38,7 @@ public class Network
 
         public NBTGUIPacket(INBTSerializable object)
         {
-            if (object instanceof EntityPlayerMP)
-            {
-                NBTTagCompound compound = new NBTTagCompound();
-                compound.setString("id", "minecraft:player");
-                ((EntityPlayerMP) object).writeToNBT(compound);
-                nbtString = compound.toString();
-            }
-            else nbtString = object.serializeNBT().toString();
+            nbtString = SavedNBT.getNBT(object).toString();
         }
 
         @Override
