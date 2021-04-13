@@ -326,7 +326,6 @@ public class Network
             server.addScheduledTask(() ->
             {
                 CNBTTemplate template = packet.template;
-                if (template.description.equals(MAGIC_STRING)) template.description = "";
                 if (template.category.equals(INBTSerializable.class)) template.category = CNBTTemplate.getCategory(NBTManipulator.EDITING_TARGETS.get(player.getUniqueID()).oldObject);
                 HashMap<String, CNBTTemplate> list = CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>());
                 if (!list.containsKey(template.name)) list.put(template.name, template);
@@ -426,7 +425,13 @@ public class Network
             server.addScheduledTask(() ->
             {
                 CNBTTemplate template = packet.template;
-                CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>()).put(template.name, template);
+                HashMap<String, CNBTTemplate> list = CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>());
+                if (template.description.equals(MAGIC_STRING))
+                {
+                    CNBTTemplate oldTemplate = list.get(template.name);
+                    template.description = oldTemplate != null ? oldTemplate.description : "";
+                }
+                list.put(template.name, template);
             });
 
             return null;
