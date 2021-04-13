@@ -280,11 +280,7 @@ public class Network
                 gui2.addOnClosedActions(() ->
                 {
                     CNBTTemplate template = packet.list.get(fake.getText());
-                    if (template != null)
-                    {
-                        gui.close();
-                        new NBTGUI(template.objectNBT.toString());
-                    }
+                    if (template != null) gui.code.setCode(MCTools.legibleNBT(template.objectNBT));
                 });
             });
             return null;
