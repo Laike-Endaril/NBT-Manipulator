@@ -333,7 +333,11 @@ public class Network
                 CNBTTemplate template = packet.template;
                 if (template.category.equals(INBTSerializable.class)) template.category = CNBTTemplate.getCategory(NBTManipulator.EDITING_TARGETS.get(player.getUniqueID()).oldObject);
                 HashMap<String, CNBTTemplate> list = CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>());
-                if (!list.containsKey(template.name)) list.put(template.name, template);
+                if (!list.containsKey(template.name))
+                {
+                    if (template.description.equals(MAGIC_STRING)) template.description = "";
+                    list.put(template.name, template);
+                }
                 else WRAPPER.sendTo(new CheckOverwriteTemplatePacket(template), player);
             });
 
