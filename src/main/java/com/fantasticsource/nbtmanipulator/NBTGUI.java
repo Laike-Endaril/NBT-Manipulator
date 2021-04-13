@@ -8,17 +8,21 @@ import com.fantasticsource.mctools.gui.element.other.GUIVerticalScrollbar;
 import com.fantasticsource.mctools.gui.element.text.CodeInput;
 import com.fantasticsource.mctools.gui.element.text.GUIText;
 import com.fantasticsource.mctools.gui.element.text.GUITextButton;
+import com.fantasticsource.mctools.gui.element.text.filter.FilterNotEmpty;
 import com.fantasticsource.mctools.gui.element.view.GUIScrollView;
+import com.fantasticsource.mctools.gui.screen.TextInputGUI;
 import com.fantasticsource.tools.datastructures.Color;
 import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.NBTException;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.INBTSerializable;
 
 import java.util.ArrayList;
 
 public class NBTGUI extends GUIScreen
 {
     public ArrayList<String> lines;
-    public GUITextButton saveToObject, saveToTemplate, loadFromTemplate, closeButton;
+    public GUITextButton saveToObject, saveToServerTemplate, loadFromServerTemplate, closeButton;
     public CodeInput code;
     public GUIVerticalScrollbar codeScroll;
     public GUIScrollView log;
@@ -44,6 +48,8 @@ public class NBTGUI extends GUIScreen
         root.add(new GUIDarkenedBackground(this));
 
 
+        //TODO tabview; code (all current elements), templates (server), templates (local)
+
         //Buttons
         saveToObject = new GUITextButton(this, "Save to Object", Color.YELLOW);
         saveToObject.addClickActions(() ->
@@ -61,16 +67,35 @@ public class NBTGUI extends GUIScreen
         });
         root.add(saveToObject);
 
-        saveToTemplate = new GUITextButton(this, "Save to Template", Color.GREEN);
-        saveToTemplate.addClickActions(() ->
+        saveToServerTemplate = new GUITextButton(this, "Save to Server Template", Color.GREEN);
+        saveToServerTemplate.addClickActions(() ->
         {
-            //TODO show text entry for name, then send template save packet (see other save button for error handling)
-        });
-        root.add(saveToTemplate);
+            TextInputGUI gui = new TextInputGUI("Save Server Template", "Name: ");
+            gui.input.input.filter = FilterNotEmpty.INSTANCE;
+            gui.doneButton.onClickActions.clear();
+            gui.doneButton.addClickActions(() ->
+            {
+                if (!gui.input.valid()) return;
 
-        loadFromTemplate = new GUITextButton(this, "Load from Template", Color.WHITE);
-        loadFromTemplate.addClickActions(() -> Network.WRAPPER.sendToServer(new Network.RequestTemplateListPacket()));
-        root.add(loadFromTemplate);
+                try
+                {
+                    Network.WRAPPER.sendToServer(new Network.SaveTemplatePacket(new CNBTTemplate(gui.input.getText(), Network.MAGIC_STRING, INBTSerializable.class, code.getCodeAsCompressedString())));
+                }
+                catch (NBTException e)
+                {
+                    setError(e.toString());
+                }
+                gui.close();
+            });
+        });
+        root.add(saveToServerTemplate);
+
+        loadFromServerTemplate = new GUITextButton(this, "Load from Server Template", Color.WHITE);
+        loadFromServerTemplate.addClickActions(() -> Network.WRAPPER.sendToServer(new Network.RequestTemplateListPacket()));
+        root.add(loadFromServerTemplate);
+
+        //TODO save to local template button
+        //TODO load from local template button
 
         closeButton = new GUITextButton(this, "Close", Color.RED);
         closeButton.addClickActions(this::close);

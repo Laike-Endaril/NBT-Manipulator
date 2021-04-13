@@ -24,7 +24,7 @@ import java.util.HashMap;
 
 public class CNBTTemplate extends Component
 {
-    public static final HashMap<Class<? extends INBTSerializable>, HashMap<String, CNBTTemplate>> SAVED_NBT = new HashMap<>();
+    public static final HashMap<Class<? extends INBTSerializable>, HashMap<String, CNBTTemplate>> TEMPLATES = new HashMap<>();
 
     public String name, description;
     protected Class<? extends INBTSerializable> category;

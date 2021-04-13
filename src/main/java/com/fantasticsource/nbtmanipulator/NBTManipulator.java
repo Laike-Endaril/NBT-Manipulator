@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 
 import static com.fantasticsource.nbtmanipulator.Network.WRAPPER;
 
-@Mod(modid = NBTManipulator.MODID, name = NBTManipulator.NAME, version = NBTManipulator.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.044zzg,)", acceptableRemoteVersions = "*")
+@Mod(modid = NBTManipulator.MODID, name = NBTManipulator.NAME, version = NBTManipulator.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.044zzh,)", acceptableRemoteVersions = "*")
 public class NBTManipulator
 {
     public static final String MODID = "nbtmanipulator";

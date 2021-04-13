@@ -5,6 +5,7 @@ import com.fantasticsource.mctools.gui.element.GUIElement;
 import com.fantasticsource.mctools.gui.element.text.GUIText;
 import com.fantasticsource.mctools.gui.element.view.GUIList;
 import com.fantasticsource.mctools.gui.screen.TextSelectionGUI;
+import com.fantasticsource.mctools.gui.screen.YesNoGUI;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -27,6 +28,7 @@ import java.util.Map;
 public class Network
 {
     public static final SimpleNetworkWrapper WRAPPER = new SimpleNetworkWrapper(NBTManipulator.MODID);
+    public static final String MAGIC_STRING = "xbcoihsf*&*&Y*@";
     private static int discriminator = 0;
 
     public static void init()
@@ -36,6 +38,9 @@ public class Network
         WRAPPER.registerMessage(NBTResultPacketHandler.class, NBTResultPacket.class, discriminator++, Side.CLIENT);
         WRAPPER.registerMessage(RequestTemplateListPacketHandler.class, RequestTemplateListPacket.class, discriminator++, Side.SERVER);
         WRAPPER.registerMessage(TemplateListPacketHandler.class, TemplateListPacket.class, discriminator++, Side.CLIENT);
+        WRAPPER.registerMessage(SaveTemplatePacketHandler.class, SaveTemplatePacket.class, discriminator++, Side.SERVER);
+        WRAPPER.registerMessage(CheckOverwriteTemplatePacketHandler.class, CheckOverwriteTemplatePacket.class, discriminator++, Side.CLIENT);
+        WRAPPER.registerMessage(ConfirmOverwriteTemplatePacketHandler.class, ConfirmOverwriteTemplatePacket.class, discriminator++, Side.SERVER);
     }
 
 
@@ -194,7 +199,7 @@ public class Network
                 if (object == null) return;
 
                 Class<? extends INBTSerializable> category = CNBTTemplate.getCategory(object);
-                HashMap<String, CNBTTemplate> list = CNBTTemplate.SAVED_NBT.get(category);
+                HashMap<String, CNBTTemplate> list = CNBTTemplate.TEMPLATES.get(category);
                 if (list == null) list = new HashMap<>();
 
                 WRAPPER.sendTo(new TemplateListPacket(category.getSimpleName(), list), player);
@@ -282,6 +287,152 @@ public class Network
                     }
                 });
             });
+            return null;
+        }
+    }
+
+
+    public static class SaveTemplatePacket implements IMessage
+    {
+        CNBTTemplate template;
+
+        public SaveTemplatePacket()
+        {
+        }
+
+        public SaveTemplatePacket(CNBTTemplate template)
+        {
+            this.template = template;
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            template.write(buf);
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            template = new CNBTTemplate().read(buf);
+        }
+    }
+
+    public static class SaveTemplatePacketHandler implements IMessageHandler<SaveTemplatePacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(SaveTemplatePacket packet, MessageContext ctx)
+        {
+            EntityPlayerMP player = ctx.getServerHandler().player;
+            if (!MCTools.isOP(player)) return null;
+
+            MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+            server.addScheduledTask(() ->
+            {
+                CNBTTemplate template = packet.template;
+                if (template.description.equals(MAGIC_STRING)) template.description = "";
+                if (template.category.equals(INBTSerializable.class)) template.category = CNBTTemplate.getCategory(NBTManipulator.EDITING_TARGETS.get(player.getUniqueID()).oldObject);
+                HashMap<String, CNBTTemplate> list = CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>());
+                if (!list.containsKey(template.name)) list.put(template.name, template);
+                else WRAPPER.sendTo(new CheckOverwriteTemplatePacket(template), player);
+            });
+
+            return null;
+        }
+    }
+
+
+    public static class CheckOverwriteTemplatePacket implements IMessage
+    {
+        CNBTTemplate template;
+
+        public CheckOverwriteTemplatePacket()
+        {
+            //Required
+        }
+
+        public CheckOverwriteTemplatePacket(CNBTTemplate template)
+        {
+            this.template = template;
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            template.write(buf);
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            template = new CNBTTemplate().read(buf);
+        }
+    }
+
+    public static class CheckOverwriteTemplatePacketHandler implements IMessageHandler<CheckOverwriteTemplatePacket, IMessage>
+    {
+        @Override
+        @SideOnly(Side.CLIENT)
+        public IMessage onMessage(CheckOverwriteTemplatePacket packet, MessageContext ctx)
+        {
+            Minecraft mc = Minecraft.getMinecraft();
+            mc.addScheduledTask(() ->
+            {
+                if (!(mc.currentScreen instanceof NBTGUI)) return;
+
+
+                YesNoGUI gui = new YesNoGUI("Overwrite Template?", "Overwrite template " + '"' + packet.template.name + '"' + " (" + packet.template.category.getSimpleName() + ")?");
+                gui.addOnClosedActions(() ->
+                {
+                    if (gui.pressedYes) WRAPPER.sendToServer(new ConfirmOverwriteTemplatePacket(packet.template));
+                });
+            });
+            return null;
+        }
+    }
+
+
+    public static class ConfirmOverwriteTemplatePacket implements IMessage
+    {
+        CNBTTemplate template;
+
+        public ConfirmOverwriteTemplatePacket()
+        {
+        }
+
+        public ConfirmOverwriteTemplatePacket(CNBTTemplate template)
+        {
+            this.template = template;
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            template.write(buf);
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            template = new CNBTTemplate().read(buf);
+        }
+    }
+
+    public static class ConfirmOverwriteTemplatePacketHandler implements IMessageHandler<ConfirmOverwriteTemplatePacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(ConfirmOverwriteTemplatePacket packet, MessageContext ctx)
+        {
+            EntityPlayerMP player = ctx.getServerHandler().player;
+            if (!MCTools.isOP(player)) return null;
+
+            MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+            server.addScheduledTask(() ->
+            {
+                CNBTTemplate template = packet.template;
+                CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>()).put(template.name, template);
+            });
+
             return null;
         }
     }
