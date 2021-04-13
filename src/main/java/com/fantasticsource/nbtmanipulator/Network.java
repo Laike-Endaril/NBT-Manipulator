@@ -6,6 +6,7 @@ import com.fantasticsource.mctools.gui.element.text.GUIText;
 import com.fantasticsource.mctools.gui.element.view.GUIList;
 import com.fantasticsource.mctools.gui.screen.TextSelectionGUI;
 import com.fantasticsource.mctools.gui.screen.YesNoGUI;
+import com.fantasticsource.tools.ReflectionTool;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -46,6 +47,7 @@ public class Network
 
     public static class NBTGUIPacket implements IMessage
     {
+        Class<? extends INBTSerializable> category;
         String nbtString;
 
         public NBTGUIPacket()
@@ -55,18 +57,21 @@ public class Network
 
         public NBTGUIPacket(INBTSerializable object)
         {
+            category = CNBTTemplate.getCategory(object);
             nbtString = CNBTTemplate.getNBT(object).toString();
         }
 
         @Override
         public void toBytes(ByteBuf buf)
         {
+            ByteBufUtils.writeUTF8String(buf, category.getName());
             ByteBufUtils.writeUTF8String(buf, nbtString);
         }
 
         @Override
         public void fromBytes(ByteBuf buf)
         {
+            category = ReflectionTool.getClassByName(ByteBufUtils.readUTF8String(buf));
             nbtString = ByteBufUtils.readUTF8String(buf);
         }
     }
@@ -77,7 +82,7 @@ public class Network
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(NBTGUIPacket packet, MessageContext ctx)
         {
-            Minecraft.getMinecraft().addScheduledTask(() -> new NBTGUI(packet.nbtString));
+            Minecraft.getMinecraft().addScheduledTask(() -> new NBTGUI(packet.category, packet.nbtString));
             return null;
         }
     }
@@ -260,8 +265,8 @@ public class Network
 
 
                 NBTGUI gui = (NBTGUI) mc.currentScreen;
-                GUIText fake = new GUIText(gui, "");
 
+                GUIText fake = new GUIText(gui, "");
                 ArrayList<String> list = new ArrayList<>(packet.list.keySet());
                 Collections.sort(list);
                 TextSelectionGUI gui2 = new TextSelectionGUI(fake, "Load " + packet.category + " Template", list.toArray(new String[0]));

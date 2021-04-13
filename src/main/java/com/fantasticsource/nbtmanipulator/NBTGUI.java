@@ -6,11 +6,15 @@ import com.fantasticsource.mctools.gui.element.GUIElement;
 import com.fantasticsource.mctools.gui.element.other.GUIDarkenedBackground;
 import com.fantasticsource.mctools.gui.element.other.GUIVerticalScrollbar;
 import com.fantasticsource.mctools.gui.element.text.CodeInput;
+import com.fantasticsource.mctools.gui.element.text.GUINavbar;
 import com.fantasticsource.mctools.gui.element.text.GUIText;
 import com.fantasticsource.mctools.gui.element.text.GUITextButton;
 import com.fantasticsource.mctools.gui.element.text.filter.FilterNotEmpty;
+import com.fantasticsource.mctools.gui.element.view.GUIList;
 import com.fantasticsource.mctools.gui.element.view.GUIScrollView;
 import com.fantasticsource.mctools.gui.screen.TextInputGUI;
+import com.fantasticsource.mctools.gui.screen.TextSelectionGUI;
+import com.fantasticsource.mctools.gui.screen.YesNoGUI;
 import com.fantasticsource.tools.datastructures.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.NBTException;
@@ -18,11 +22,14 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 public class NBTGUI extends GUIScreen
 {
+    public String title;
     public ArrayList<String> lines;
-    public GUITextButton saveToObject, saveToServerTemplate, loadFromServerTemplate, closeButton;
+    public GUITextButton saveToObject, saveToServerTemplate, loadFromServerTemplate, saveToLocalTemplate, loadFromLocalTemplate, closeButton;
     public CodeInput code;
     public GUIVerticalScrollbar codeScroll;
     public GUIScrollView log;
@@ -33,19 +40,23 @@ public class NBTGUI extends GUIScreen
     }
 
 
-    public NBTGUI(String nbtString)
+    public NBTGUI(Class<? extends INBTSerializable> category, String nbtString)
     {
-        this(nbtString, false);
+        this(category, nbtString, false);
     }
 
-    public NBTGUI(String nbtString, boolean clientSide)
+    public NBTGUI(Class<? extends INBTSerializable> category, String nbtString, boolean clientSide)
     {
+        title = "NBT Manipulator (" + category.getSimpleName() + ")";
         lines = MCTools.legibleNBT(nbtString);
         show();
 
 
         //Background
-        root.add(new GUIDarkenedBackground(this));
+        root.addAll(
+                new GUIDarkenedBackground(this),
+                new GUINavbar(this)
+        );
 
 
         //TODO tabview; code (all current elements), templates (server), templates (local)
@@ -94,8 +105,77 @@ public class NBTGUI extends GUIScreen
         loadFromServerTemplate.addClickActions(() -> Network.WRAPPER.sendToServer(new Network.RequestTemplateListPacket()));
         root.add(loadFromServerTemplate);
 
-        //TODO save to local template button
-        //TODO load from local template button
+        saveToLocalTemplate = new GUITextButton(this, "Save to Local Template", Color.GREEN);
+        saveToLocalTemplate.addClickActions(() ->
+        {
+            TextInputGUI gui = new TextInputGUI("Save Server Template", "Name: ");
+            gui.input.input.filter = FilterNotEmpty.INSTANCE;
+            gui.doneButton.onClickActions.clear();
+            gui.doneButton.addClickActions(() ->
+            {
+                if (!gui.input.valid()) return;
+
+                try
+                {
+                    CNBTTemplate template = new CNBTTemplate(gui.input.getText(), "", category, code.getCodeAsCompressedString());
+                    HashMap<String, CNBTTemplate> list = CNBTTemplate.TEMPLATES.computeIfAbsent(category, o -> new HashMap<>());
+                    CNBTTemplate oldTemplate = list.get(template.name);
+                    if (oldTemplate == null)
+                    {
+                        list.put(template.name, template);
+                        gui.close();
+                    }
+                    else
+                    {
+                        template.description = oldTemplate.description;
+                        YesNoGUI gui2 = new YesNoGUI("Overwrite Template?", "Overwrite template " + '"' + template.name + '"' + " (" + template.category.getSimpleName() + ")?");
+                        gui2.addOnClosedActions(() ->
+                        {
+                            if (gui2.pressedYes)
+                            {
+                                list.put(template.name, template);
+                                gui.close();
+                            }
+                        });
+                    }
+                    gui.close();
+                }
+                catch (NBTException e)
+                {
+                    setError(e.toString());
+                }
+            });
+        });
+        root.add(saveToLocalTemplate);
+
+        loadFromLocalTemplate = new GUITextButton(this, "Load from Local Template", Color.WHITE);
+        loadFromLocalTemplate.addClickActions(() ->
+        {
+            GUIText fake = new GUIText(this, "");
+            HashMap<String, CNBTTemplate> map = CNBTTemplate.TEMPLATES.get(category);
+            ArrayList<String> list = new ArrayList<>();
+            if (map != null) list.addAll(map.keySet());
+            Collections.sort(list);
+            TextSelectionGUI gui2 = new TextSelectionGUI(fake, "Load " + category + " Template", list.toArray(new String[0]));
+            for (GUIElement element : gui2.root.children)
+            {
+                if (element instanceof GUIList)
+                {
+                    for (GUIList.Line line : ((GUIList) element).getLines())
+                    {
+                        GUIText text = (GUIText) line.getLineElement(0);
+                        text.setTooltip(map.get(text.getText()).description);
+                    }
+                }
+            }
+
+            gui2.addOnClosedActions(() ->
+            {
+                CNBTTemplate template = map.get(fake.getText());
+                if (template != null) code.setCode(MCTools.legibleNBT(template.objectNBT));
+            });
+        });
+        root.add(loadFromLocalTemplate);
 
         closeButton = new GUITextButton(this, "Close", Color.RED);
         closeButton.addClickActions(this::close);
@@ -124,7 +204,7 @@ public class NBTGUI extends GUIScreen
     @Override
     public String title()
     {
-        return "NBT Manipulator";
+        return title;
     }
 
     @Override

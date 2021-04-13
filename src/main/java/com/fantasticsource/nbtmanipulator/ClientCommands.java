@@ -129,7 +129,7 @@ public class ClientCommands extends CommandBase implements IClientCommand
     public static void startEditing(INBTSerializable object, Predicate<NBTEditingData> callback)
     {
         CLIENT_DATA = new NBTEditingData(object, callback);
-        ClientTickTimer.schedule(1, () -> new NBTGUI(object.serializeNBT().toString(), true));
+        ClientTickTimer.schedule(1, () -> new NBTGUI(CNBTTemplate.getCategory(object), object.serializeNBT().toString(), true));
     }
 
     protected static void hand()
