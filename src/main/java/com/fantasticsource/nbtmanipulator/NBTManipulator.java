@@ -26,18 +26,19 @@ import net.minecraftforge.fml.relauncher.Side;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import static com.fantasticsource.nbtmanipulator.Network.WRAPPER;
 
-@Mod(modid = NBTManipulator.MODID, name = NBTManipulator.NAME, version = NBTManipulator.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.044zze,)", acceptableRemoteVersions = "*")
+@Mod(modid = NBTManipulator.MODID, name = NBTManipulator.NAME, version = NBTManipulator.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.044zzg,)", acceptableRemoteVersions = "*")
 public class NBTManipulator
 {
     public static final String MODID = "nbtmanipulator";
     public static final String NAME = "NBT Manipulator";
     public static final String VERSION = "1.12.2.004g";
 
-    protected static final HashMap<EntityPlayerMP, NBTEditingData> EDITING_TARGETS = new HashMap<>();
+    protected static final HashMap<UUID, NBTEditingData> EDITING_TARGETS = new HashMap<>();
 
     @Mod.EventHandler
     public static void preInit(FMLPreInitializationEvent event)
@@ -67,7 +68,7 @@ public class NBTManipulator
     @SubscribeEvent
     public static void playerLogoff(PlayerEvent.PlayerLoggedOutEvent event)
     {
-        EDITING_TARGETS.remove(event.player);
+        EDITING_TARGETS.remove(event.player.getUniqueID());
     }
 
 
@@ -75,7 +76,7 @@ public class NBTManipulator
     {
         try
         {
-            NBTEditingData data = EDITING_TARGETS.get(editor);
+            NBTEditingData data = EDITING_TARGETS.get(editor.getUniqueID());
             data.run(nbtString);
             WRAPPER.sendTo(new Network.NBTResultPacket(data.error), editor);
         }
@@ -93,7 +94,7 @@ public class NBTManipulator
      */
     public static void startEditing(EntityPlayerMP editor, INBTSerializable object, Predicate<NBTEditingData> callback)
     {
-        EDITING_TARGETS.put(editor, new NBTEditingData(object, callback));
+        EDITING_TARGETS.put(editor.getUniqueID(), new NBTEditingData(object, callback));
         WRAPPER.sendTo(new Network.NBTGUIPacket(object), editor);
     }
 

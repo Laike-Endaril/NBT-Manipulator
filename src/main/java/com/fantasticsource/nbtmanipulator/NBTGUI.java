@@ -18,7 +18,7 @@ import java.util.ArrayList;
 public class NBTGUI extends GUIScreen
 {
     public ArrayList<String> lines;
-    public GUITextButton saveButton, closeButton;
+    public GUITextButton saveToObject, saveToTemplate, loadFromTemplate, closeButton;
     public CodeInput code;
     public GUIVerticalScrollbar codeScroll;
     public GUIScrollView log;
@@ -45,21 +45,32 @@ public class NBTGUI extends GUIScreen
 
 
         //Buttons
-        saveButton = new GUITextButton(this, "Save", Color.GREEN);
-        saveButton.addClickActions(() ->
+        saveToObject = new GUITextButton(this, "Save to Object", Color.YELLOW);
+        saveToObject.addClickActions(() ->
         {
             String codeString = code.getCodeAsCompressedString();
             try
             {
                 if (clientSide) ClientCommands.save(codeString);
-                else Network.WRAPPER.sendToServer(new Network.NBTSavePacket(codeString));
+                else Network.WRAPPER.sendToServer(new Network.SaveToObjectPacket(codeString));
             }
             catch (Exception e)
             {
                 setError(e.toString());
             }
         });
-        root.add(saveButton);
+        root.add(saveToObject);
+
+        saveToTemplate = new GUITextButton(this, "Save to Template", Color.GREEN);
+        saveToTemplate.addClickActions(() ->
+        {
+            //TODO show text entry for name, then send template save packet (see other save button for error handling)
+        });
+        root.add(saveToTemplate);
+
+        loadFromTemplate = new GUITextButton(this, "Load from Template", Color.WHITE);
+        loadFromTemplate.addClickActions(() -> Network.WRAPPER.sendToServer(new Network.RequestTemplateListPacket()));
+        root.add(loadFromTemplate);
 
         closeButton = new GUITextButton(this, "Close", Color.RED);
         closeButton.addClickActions(this::close);
@@ -100,9 +111,8 @@ public class NBTGUI extends GUIScreen
     public void onResize(Minecraft mcIn, int w, int h)
     {
         super.onResize(mcIn, w, h);
-        closeButton.x = saveButton.x + saveButton.width;
 
-        code.y = saveButton.height;
+        code.y = closeButton.y + closeButton.height;
         code.height = 2d / 3 - code.y;
         code.recalc(0);
 

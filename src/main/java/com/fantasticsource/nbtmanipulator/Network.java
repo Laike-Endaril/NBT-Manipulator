@@ -1,5 +1,10 @@
 package com.fantasticsource.nbtmanipulator;
 
+import com.fantasticsource.mctools.MCTools;
+import com.fantasticsource.mctools.gui.element.GUIElement;
+import com.fantasticsource.mctools.gui.element.text.GUIText;
+import com.fantasticsource.mctools.gui.element.view.GUIList;
+import com.fantasticsource.mctools.gui.screen.TextSelectionGUI;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -14,6 +19,11 @@ import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 public class Network
 {
     public static final SimpleNetworkWrapper WRAPPER = new SimpleNetworkWrapper(NBTManipulator.MODID);
@@ -22,8 +32,10 @@ public class Network
     public static void init()
     {
         WRAPPER.registerMessage(NBTGUIPacketHandler.class, NBTGUIPacket.class, discriminator++, Side.CLIENT);
-        WRAPPER.registerMessage(NBTSavePacketHandler.class, NBTSavePacket.class, discriminator++, Side.SERVER);
+        WRAPPER.registerMessage(SaveToObjectPacketHandler.class, SaveToObjectPacket.class, discriminator++, Side.SERVER);
         WRAPPER.registerMessage(NBTResultPacketHandler.class, NBTResultPacket.class, discriminator++, Side.CLIENT);
+        WRAPPER.registerMessage(RequestTemplateListPacketHandler.class, RequestTemplateListPacket.class, discriminator++, Side.SERVER);
+        WRAPPER.registerMessage(TemplateListPacketHandler.class, TemplateListPacket.class, discriminator++, Side.CLIENT);
     }
 
 
@@ -38,7 +50,7 @@ public class Network
 
         public NBTGUIPacket(INBTSerializable object)
         {
-            nbtString = SavedNBT.getNBT(object).toString();
+            nbtString = CNBTTemplate.getNBT(object).toString();
         }
 
         @Override
@@ -65,16 +77,17 @@ public class Network
         }
     }
 
-    public static class NBTSavePacket implements IMessage
+
+    public static class SaveToObjectPacket implements IMessage
     {
         String nbtString;
 
-        public NBTSavePacket()
+        public SaveToObjectPacket()
         {
             //Required
         }
 
-        public NBTSavePacket(String nbtString)
+        public SaveToObjectPacket(String nbtString)
         {
             this.nbtString = nbtString;
         }
@@ -92,10 +105,10 @@ public class Network
         }
     }
 
-    public static class NBTSavePacketHandler implements IMessageHandler<NBTSavePacket, IMessage>
+    public static class SaveToObjectPacketHandler implements IMessageHandler<SaveToObjectPacket, IMessage>
     {
         @Override
-        public IMessage onMessage(NBTSavePacket packet, MessageContext ctx)
+        public IMessage onMessage(SaveToObjectPacket packet, MessageContext ctx)
         {
             MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
             EntityPlayerMP player = ctx.getServerHandler().player;
@@ -141,6 +154,134 @@ public class Network
         public IMessage onMessage(NBTResultPacket packet, MessageContext ctx)
         {
             NBTGUI.setError(packet.errorMessage);
+            return null;
+        }
+    }
+
+
+    public static class RequestTemplateListPacket implements IMessage
+    {
+        public RequestTemplateListPacket()
+        {
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+        }
+    }
+
+    public static class RequestTemplateListPacketHandler implements IMessageHandler<RequestTemplateListPacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(RequestTemplateListPacket packet, MessageContext ctx)
+        {
+            EntityPlayerMP player = ctx.getServerHandler().player;
+            if (!MCTools.isOP(player)) return null;
+
+            MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+            server.addScheduledTask(() ->
+            {
+                NBTEditingData data = NBTManipulator.EDITING_TARGETS.get(player.getUniqueID());
+                if (data == null) return;
+
+                INBTSerializable object = data.oldObject;
+                if (object == null) return;
+
+                Class<? extends INBTSerializable> category = CNBTTemplate.getCategory(object);
+                HashMap<String, CNBTTemplate> list = CNBTTemplate.SAVED_NBT.get(category);
+                if (list == null) list = new HashMap<>();
+
+                WRAPPER.sendTo(new TemplateListPacket(category.getSimpleName(), list), player);
+            });
+
+            return null;
+        }
+    }
+
+
+    public static class TemplateListPacket implements IMessage
+    {
+        String category;
+        HashMap<String, CNBTTemplate> list;
+
+        public TemplateListPacket()
+        {
+            //Required
+        }
+
+        public TemplateListPacket(String category, HashMap<String, CNBTTemplate> list)
+        {
+            this.category = category;
+            this.list = list;
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            ByteBufUtils.writeUTF8String(buf, category);
+            buf.writeInt(list.size());
+            for (Map.Entry<String, CNBTTemplate> entry : list.entrySet())
+            {
+                ByteBufUtils.writeUTF8String(buf, entry.getKey());
+                entry.getValue().write(buf);
+            }
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            category = ByteBufUtils.readUTF8String(buf);
+            list = new HashMap<>();
+            for (int i = buf.readInt(); i > 0; i--) list.put(ByteBufUtils.readUTF8String(buf), new CNBTTemplate().read(buf));
+        }
+    }
+
+    public static class TemplateListPacketHandler implements IMessageHandler<TemplateListPacket, IMessage>
+    {
+        @Override
+        @SideOnly(Side.CLIENT)
+        public IMessage onMessage(TemplateListPacket packet, MessageContext ctx)
+        {
+            Minecraft mc = Minecraft.getMinecraft();
+            mc.addScheduledTask(() ->
+            {
+                if (!(mc.currentScreen instanceof NBTGUI)) return;
+
+
+                NBTGUI gui = (NBTGUI) mc.currentScreen;
+                GUIText fake = new GUIText(gui, "");
+
+                ArrayList<String> list = new ArrayList<>(packet.list.keySet());
+                Collections.sort(list);
+                TextSelectionGUI gui2 = new TextSelectionGUI(fake, "Load " + packet.category + " Template", list.toArray(new String[0]));
+                for (GUIElement element : gui2.root.children)
+                {
+                    if (element instanceof GUIList)
+                    {
+                        for (GUIList.Line line : ((GUIList) element).getLines())
+                        {
+                            GUIText text = (GUIText) line.getLineElement(0);
+                            text.setTooltip(packet.list.get(text.getText()).description);
+                        }
+                    }
+                }
+
+                gui2.addOnClosedActions(() ->
+                {
+                    CNBTTemplate template = packet.list.get(fake.getText());
+                    if (template != null)
+                    {
+                        gui.close();
+                        new NBTGUI(template.objectNBT.toString());
+                    }
+                });
+            });
             return null;
         }
     }
