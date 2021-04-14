@@ -12,6 +12,7 @@ import com.fantasticsource.mctools.gui.element.text.GUITextButton;
 import com.fantasticsource.mctools.gui.element.text.filter.FilterNotEmpty;
 import com.fantasticsource.mctools.gui.element.view.GUIList;
 import com.fantasticsource.mctools.gui.element.view.GUIScrollView;
+import com.fantasticsource.mctools.gui.element.view.GUITabView;
 import com.fantasticsource.mctools.gui.screen.TextInputGUI;
 import com.fantasticsource.mctools.gui.screen.TextSelectionGUI;
 import com.fantasticsource.mctools.gui.screen.YesNoGUI;
@@ -29,7 +30,8 @@ public class NBTGUI extends GUIScreen
 {
     public String title;
     public ArrayList<String> lines;
-    public GUITextButton saveToObject, saveToServerTemplate, loadFromServerTemplate, saveToLocalTemplate, loadFromLocalTemplate, closeButton;
+    public GUITabView tabView;
+    public GUITextButton saveToObject, saveToServerTemplate, loadFromServerTemplate, saveToLocalTemplate, loadFromLocalTemplate;
     public CodeInput code;
     public GUIVerticalScrollbar codeScroll;
     public GUIScrollView log;
@@ -52,14 +54,20 @@ public class NBTGUI extends GUIScreen
         show();
 
 
-        //Background
+        //Background and navbar
+        GUINavbar navbar = new GUINavbar(this);
         root.addAll(
                 new GUIDarkenedBackground(this),
-                new GUINavbar(this)
+                navbar
         );
 
+        //Tabview
+        tabView = new GUITabView(this, 1, 1, "Code", "Server Template List", "Local Template List");
+        root.add(tabView);
+        navbar.addRecalcActions(() -> tabView.height = 1 - tabView.y);
 
-        //TODO tabview; code (all current elements), templates (server), templates (local)
+
+        //Code Tab
 
         //Buttons
         saveToObject = new GUITextButton(this, "Save to Object", Color.YELLOW);
@@ -76,7 +84,7 @@ public class NBTGUI extends GUIScreen
                 setError(e.toString());
             }
         });
-        root.add(saveToObject);
+        tabView.tabViews.get(0).add(saveToObject);
 
         saveToServerTemplate = new GUITextButton(this, "Save to Server Template", Color.GREEN);
         saveToServerTemplate.addClickActions(() ->
@@ -99,11 +107,11 @@ public class NBTGUI extends GUIScreen
                 gui.close();
             });
         });
-        root.add(saveToServerTemplate);
+        tabView.tabViews.get(0).add(saveToServerTemplate);
 
         loadFromServerTemplate = new GUITextButton(this, "Load from Server Template", Color.WHITE);
         loadFromServerTemplate.addClickActions(() -> Network.WRAPPER.sendToServer(new Network.RequestTemplateListPacket()));
-        root.add(loadFromServerTemplate);
+        tabView.tabViews.get(0).add(loadFromServerTemplate);
 
         saveToLocalTemplate = new GUITextButton(this, "Save to Local Template", Color.GREEN);
         saveToLocalTemplate.addClickActions(() ->
@@ -146,7 +154,7 @@ public class NBTGUI extends GUIScreen
                 }
             });
         });
-        root.add(saveToLocalTemplate);
+        tabView.tabViews.get(0).add(saveToLocalTemplate);
 
         loadFromLocalTemplate = new GUITextButton(this, "Load from Local Template", Color.WHITE);
         loadFromLocalTemplate.addClickActions(() ->
@@ -175,30 +183,31 @@ public class NBTGUI extends GUIScreen
                 if (template != null) code.setCode(MCTools.legibleNBT(template.objectNBT));
             });
         });
-        root.add(loadFromLocalTemplate);
-
-        closeButton = new GUITextButton(this, "Close", Color.RED);
-        closeButton.addClickActions(this::close);
-        root.add(closeButton);
-
+        tabView.tabViews.get(0).add(loadFromLocalTemplate);
 
         //Code input
         code = new CodeInput(this, 0.98, 2d / 3, lines.toArray(new String[0]));
-        root.add(code);
+        tabView.tabViews.get(0).add(code);
         code.get(0).setActive(true);
         codeScroll = new GUIVerticalScrollbar(this, 0.02, 2d / 3, Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, code);
-        root.add(codeScroll);
-
+        tabView.tabViews.get(0).add(codeScroll);
 
         //Error log
         log = new GUIScrollView(this, 0.98, 1 - (code.y + code.height));
-        root.add(log);
+        tabView.tabViews.get(0).add(log);
         GUIVerticalScrollbar scrollbar = new GUIVerticalScrollbar(this, 0.02, 1 - (code.y + code.height), Color.GRAY, Color.BLANK, Color.WHITE, Color.BLANK, log);
-        root.add(scrollbar);
-
+        tabView.tabViews.get(0).add(scrollbar);
 
         //Warning
         setError("WARNING!!!\nLooking at the NBT should never cause an issue, but editing and saving can cause crashes and world corruption if you don't know what you're doing!  Use at your own risk!  World backup suggested!");
+
+
+        //Server Template List
+        //TODO
+
+
+        //Local Template List
+        //TODO
     }
 
     @Override
@@ -210,23 +219,6 @@ public class NBTGUI extends GUIScreen
     @Override
     protected void init()
     {
-    }
-
-    @Override
-    public void onResize(Minecraft mcIn, int w, int h)
-    {
-        super.onResize(mcIn, w, h);
-
-        code.y = closeButton.y + closeButton.height;
-        code.height = 2d / 3 - code.y;
-        code.recalc(0);
-
-        for (int i = 1; i < log.size(); i++)
-        {
-            GUIElement element = log.get(i);
-            element.y = (double) i * FONT_RENDERER.FONT_HEIGHT / height / log.height;
-        }
-        log.recalc(0);
     }
 
     public static void setError(String error)
