@@ -42,12 +42,12 @@ public class NBTGUI extends GUIScreen
     }
 
 
-    public NBTGUI(Class<? extends INBTSerializable> category, String nbtString)
+    public NBTGUI(Class<? extends INBTSerializable> category, HashMap<String, CNBTTemplate> map, String nbtString)
     {
-        this(category, nbtString, false);
+        this(category, map, nbtString, false);
     }
 
-    public NBTGUI(Class<? extends INBTSerializable> category, String nbtString, boolean clientSide)
+    public NBTGUI(Class<? extends INBTSerializable> category, HashMap<String, CNBTTemplate> serverMap, String nbtString, boolean clientSide)
     {
         title = "NBT Manipulator (" + category.getSimpleName() + ")";
         lines = MCTools.legibleNBT(nbtString);
@@ -126,11 +126,11 @@ public class NBTGUI extends GUIScreen
                 try
                 {
                     CNBTTemplate template = new CNBTTemplate(gui.input.getText(), "", category, code.getCodeAsCompressedString());
-                    HashMap<String, CNBTTemplate> list = CNBTTemplate.TEMPLATES.computeIfAbsent(category, o -> new HashMap<>());
-                    CNBTTemplate oldTemplate = list.get(template.name);
+                    HashMap<String, CNBTTemplate> map2 = CNBTTemplate.TEMPLATES.computeIfAbsent(category, o -> new HashMap<>());
+                    CNBTTemplate oldTemplate = map2.get(template.name);
                     if (oldTemplate == null)
                     {
-                        list.put(template.name, template);
+                        map2.put(template.name, template);
                         gui.close();
                     }
                     else
@@ -141,7 +141,7 @@ public class NBTGUI extends GUIScreen
                         {
                             if (gui2.pressedYes)
                             {
-                                list.put(template.name, template);
+                                map2.put(template.name, template);
                                 gui.close();
                             }
                         });
@@ -160,9 +160,9 @@ public class NBTGUI extends GUIScreen
         loadFromLocalTemplate.addClickActions(() ->
         {
             GUIText fake = new GUIText(this, "");
-            HashMap<String, CNBTTemplate> map = CNBTTemplate.TEMPLATES.get(category);
+            HashMap<String, CNBTTemplate> map2 = CNBTTemplate.TEMPLATES.get(category);
             ArrayList<String> list = new ArrayList<>();
-            if (map != null) list.addAll(map.keySet());
+            if (map2 != null) list.addAll(map2.keySet());
             Collections.sort(list);
             TextSelectionGUI gui2 = new TextSelectionGUI(fake, "Load " + category + " Template", list.toArray(new String[0]));
             for (GUIElement element : gui2.root.children)
@@ -172,14 +172,14 @@ public class NBTGUI extends GUIScreen
                     for (GUIList.Line line : ((GUIList) element).getLines())
                     {
                         GUIText text = (GUIText) line.getLineElement(0);
-                        text.setTooltip(map.get(text.getText()).description);
+                        text.setTooltip(map2.get(text.getText()).description);
                     }
                 }
             }
 
             gui2.addOnClosedActions(() ->
             {
-                CNBTTemplate template = map.get(fake.getText());
+                CNBTTemplate template = map2.get(fake.getText());
                 if (template != null) code.setCode(MCTools.legibleNBT(template.objectNBT));
             });
         });
@@ -203,10 +203,17 @@ public class NBTGUI extends GUIScreen
 
 
         //Server Template List
+
+        ArrayList<String> serverList = new ArrayList<>(serverMap.keySet());
+        Collections.sort(serverList);
         //TODO
 
 
         //Local Template List
+
+        HashMap<String, CNBTTemplate> clientMap = CNBTTemplate.TEMPLATES.get(category);
+        ArrayList<String> clientList = clientMap == null ? new ArrayList<>() : new ArrayList<>(clientMap.keySet());
+        Collections.sort(clientList);
         //TODO
     }
 

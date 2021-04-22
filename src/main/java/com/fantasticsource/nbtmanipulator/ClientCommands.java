@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -129,7 +130,9 @@ public class ClientCommands extends CommandBase implements IClientCommand
     public static void startEditing(INBTSerializable object, Predicate<NBTEditingData> callback)
     {
         CLIENT_DATA = new NBTEditingData(object, callback);
-        ClientTickTimer.schedule(1, () -> new NBTGUI(CNBTTemplate.getCategory(object), object.serializeNBT().toString(), true));
+        Class<? extends INBTSerializable> category = CNBTTemplate.getCategory(object);
+        HashMap<String, CNBTTemplate> map = CNBTTemplate.TEMPLATES.getOrDefault(category, new HashMap<>());
+        ClientTickTimer.schedule(1, () -> new NBTGUI(category, map, CNBTTemplate.getNBT(object).toString(), true));
     }
 
     protected static void hand()

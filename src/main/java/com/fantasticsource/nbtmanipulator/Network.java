@@ -48,6 +48,7 @@ public class Network
     public static class NBTGUIPacket implements IMessage
     {
         Class<? extends INBTSerializable> category;
+        HashMap<String, CNBTTemplate> map;
         String nbtString;
 
         public NBTGUIPacket()
@@ -58,6 +59,7 @@ public class Network
         public NBTGUIPacket(INBTSerializable object)
         {
             category = CNBTTemplate.getCategory(object);
+            map = CNBTTemplate.TEMPLATES.getOrDefault(category, new HashMap<>());
             nbtString = CNBTTemplate.getNBT(object).toString();
         }
 
@@ -65,6 +67,12 @@ public class Network
         public void toBytes(ByteBuf buf)
         {
             ByteBufUtils.writeUTF8String(buf, category.getName());
+            buf.writeInt(map.size());
+            for (Map.Entry<String, CNBTTemplate> entry : map.entrySet())
+            {
+                ByteBufUtils.writeUTF8String(buf, entry.getKey());
+                entry.getValue().write(buf);
+            }
             ByteBufUtils.writeUTF8String(buf, nbtString);
         }
 
@@ -72,6 +80,11 @@ public class Network
         public void fromBytes(ByteBuf buf)
         {
             category = ReflectionTool.getClassByName(ByteBufUtils.readUTF8String(buf));
+            map = new HashMap<>();
+            for (int i = buf.readInt(); i > 0; i--)
+            {
+                map.put(ByteBufUtils.readUTF8String(buf), new CNBTTemplate().read(buf));
+            }
             nbtString = ByteBufUtils.readUTF8String(buf);
         }
     }
@@ -82,7 +95,7 @@ public class Network
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(NBTGUIPacket packet, MessageContext ctx)
         {
-            Minecraft.getMinecraft().addScheduledTask(() -> new NBTGUI(packet.category, packet.nbtString));
+            Minecraft.getMinecraft().addScheduledTask(() -> new NBTGUI(packet.category, packet.map, packet.nbtString));
             return null;
         }
     }
@@ -204,10 +217,10 @@ public class Network
                 if (object == null) return;
 
                 Class<? extends INBTSerializable> category = CNBTTemplate.getCategory(object);
-                HashMap<String, CNBTTemplate> list = CNBTTemplate.TEMPLATES.get(category);
-                if (list == null) list = new HashMap<>();
+                HashMap<String, CNBTTemplate> map = CNBTTemplate.TEMPLATES.get(category);
+                if (map == null) map = new HashMap<>();
 
-                WRAPPER.sendTo(new TemplateListPacket(category.getSimpleName(), list), player);
+                WRAPPER.sendTo(new TemplateListPacket(category.getSimpleName(), map), player);
             });
 
             return null;
@@ -218,25 +231,25 @@ public class Network
     public static class TemplateListPacket implements IMessage
     {
         String category;
-        HashMap<String, CNBTTemplate> list;
+        HashMap<String, CNBTTemplate> map;
 
         public TemplateListPacket()
         {
             //Required
         }
 
-        public TemplateListPacket(String category, HashMap<String, CNBTTemplate> list)
+        public TemplateListPacket(String category, HashMap<String, CNBTTemplate> map)
         {
             this.category = category;
-            this.list = list;
+            this.map = map;
         }
 
         @Override
         public void toBytes(ByteBuf buf)
         {
             ByteBufUtils.writeUTF8String(buf, category);
-            buf.writeInt(list.size());
-            for (Map.Entry<String, CNBTTemplate> entry : list.entrySet())
+            buf.writeInt(map.size());
+            for (Map.Entry<String, CNBTTemplate> entry : map.entrySet())
             {
                 ByteBufUtils.writeUTF8String(buf, entry.getKey());
                 entry.getValue().write(buf);
@@ -247,8 +260,8 @@ public class Network
         public void fromBytes(ByteBuf buf)
         {
             category = ByteBufUtils.readUTF8String(buf);
-            list = new HashMap<>();
-            for (int i = buf.readInt(); i > 0; i--) list.put(ByteBufUtils.readUTF8String(buf), new CNBTTemplate().read(buf));
+            map = new HashMap<>();
+            for (int i = buf.readInt(); i > 0; i--) map.put(ByteBufUtils.readUTF8String(buf), new CNBTTemplate().read(buf));
         }
     }
 
@@ -267,7 +280,7 @@ public class Network
                 NBTGUI gui = (NBTGUI) mc.currentScreen;
 
                 GUIText fake = new GUIText(gui, "");
-                ArrayList<String> list = new ArrayList<>(packet.list.keySet());
+                ArrayList<String> list = new ArrayList<>(packet.map.keySet());
                 Collections.sort(list);
                 TextSelectionGUI gui2 = new TextSelectionGUI(fake, "Load " + packet.category + " Template", list.toArray(new String[0]));
                 for (GUIElement element : gui2.root.children)
@@ -277,14 +290,14 @@ public class Network
                         for (GUIList.Line line : ((GUIList) element).getLines())
                         {
                             GUIText text = (GUIText) line.getLineElement(0);
-                            text.setTooltip(packet.list.get(text.getText()).description);
+                            text.setTooltip(packet.map.get(text.getText()).description);
                         }
                     }
                 }
 
                 gui2.addOnClosedActions(() ->
                 {
-                    CNBTTemplate template = packet.list.get(fake.getText());
+                    CNBTTemplate template = packet.map.get(fake.getText());
                     if (template != null) gui.code.setCode(MCTools.legibleNBT(template.objectNBT));
                 });
             });
@@ -332,11 +345,11 @@ public class Network
             {
                 CNBTTemplate template = packet.template;
                 if (template.category.equals(INBTSerializable.class)) template.category = CNBTTemplate.getCategory(NBTManipulator.EDITING_TARGETS.get(player.getUniqueID()).oldObject);
-                HashMap<String, CNBTTemplate> list = CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>());
-                if (!list.containsKey(template.name))
+                HashMap<String, CNBTTemplate> map = CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>());
+                if (!map.containsKey(template.name))
                 {
                     if (template.description.equals(MAGIC_STRING)) template.description = "";
-                    list.put(template.name, template);
+                    map.put(template.name, template);
                 }
                 else WRAPPER.sendTo(new CheckOverwriteTemplatePacket(template), player);
             });
@@ -434,13 +447,13 @@ public class Network
             server.addScheduledTask(() ->
             {
                 CNBTTemplate template = packet.template;
-                HashMap<String, CNBTTemplate> list = CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>());
+                HashMap<String, CNBTTemplate> map = CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>());
                 if (template.description.equals(MAGIC_STRING))
                 {
-                    CNBTTemplate oldTemplate = list.get(template.name);
+                    CNBTTemplate oldTemplate = map.get(template.name);
                     template.description = oldTemplate != null ? oldTemplate.description : "";
                 }
-                list.put(template.name, template);
+                map.put(template.name, template);
             });
 
             return null;
