@@ -160,9 +160,8 @@ public class NBTGUI extends GUIScreen
         loadFromLocalTemplate.addClickActions(() ->
         {
             GUIText fake = new GUIText(this, "");
-            HashMap<String, CNBTTemplate> map2 = CNBTTemplate.TEMPLATES.get(category);
-            ArrayList<String> list = new ArrayList<>();
-            if (map2 != null) list.addAll(map2.keySet());
+            HashMap<String, CNBTTemplate> map2 = CNBTTemplate.TEMPLATES.computeIfAbsent(category, o -> new HashMap<>());
+            ArrayList<String> list = new ArrayList<>(map2.keySet());
             Collections.sort(list);
             TextSelectionGUI gui2 = new TextSelectionGUI(fake, "Load " + category + " Template", list.toArray(new String[0]));
             for (GUIElement element : gui2.root.children)
