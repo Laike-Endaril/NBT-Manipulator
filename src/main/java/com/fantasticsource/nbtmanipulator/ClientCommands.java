@@ -131,7 +131,7 @@ public class ClientCommands extends CommandBase implements IClientCommand
     {
         CLIENT_DATA = new NBTEditingData(object, callback);
         Class<? extends INBTSerializable> category = CNBTTemplate.getCategory(object);
-        HashMap<String, CNBTTemplate> map = CNBTTemplate.TEMPLATES.getOrDefault(category, new HashMap<>());
+        HashMap<String, CNBTTemplate> map = CNBTTemplate.TEMPLATES.computeIfAbsent(category, o -> new HashMap<>());
         ClientTickTimer.schedule(1, () -> new NBTGUI(category, map, CNBTTemplate.getNBT(object).toString(), true));
     }
 

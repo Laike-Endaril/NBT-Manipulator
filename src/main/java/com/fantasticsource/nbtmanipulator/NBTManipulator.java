@@ -50,6 +50,8 @@ public class NBTManipulator
         {
             ClientCommandHandler.instance.registerCommand(ClientCommands.INSTANCE);
         }
+
+        CNBTTemplate.loadAll(event);
     }
 
     @SubscribeEvent

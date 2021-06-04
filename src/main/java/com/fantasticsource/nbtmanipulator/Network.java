@@ -59,7 +59,7 @@ public class Network
         public NBTGUIPacket(INBTSerializable object)
         {
             category = CNBTTemplate.getCategory(object);
-            map = CNBTTemplate.TEMPLATES.getOrDefault(category, new HashMap<>());
+            map = CNBTTemplate.TEMPLATES.computeIfAbsent(category, o -> new HashMap<>());
             nbtString = CNBTTemplate.getNBT(object).toString();
         }
 
@@ -217,10 +217,7 @@ public class Network
                 if (object == null) return;
 
                 Class<? extends INBTSerializable> category = CNBTTemplate.getCategory(object);
-                HashMap<String, CNBTTemplate> map = CNBTTemplate.TEMPLATES.get(category);
-                if (map == null) map = new HashMap<>();
-
-                WRAPPER.sendTo(new TemplateListPacket(category.getSimpleName(), map), player);
+                WRAPPER.sendTo(new TemplateListPacket(category.getSimpleName(), CNBTTemplate.TEMPLATES.computeIfAbsent(category, o -> new HashMap<>())), player);
             });
 
             return null;
@@ -350,6 +347,7 @@ public class Network
                 {
                     if (template.description.equals(MAGIC_STRING)) template.description = "";
                     map.put(template.name, template);
+                    template.saveToFile();
                 }
                 else WRAPPER.sendTo(new CheckOverwriteTemplatePacket(template), player);
             });
@@ -454,6 +452,7 @@ public class Network
                     template.description = oldTemplate != null ? oldTemplate.description : "";
                 }
                 map.put(template.name, template);
+                template.saveToFile();
             });
 
             return null;

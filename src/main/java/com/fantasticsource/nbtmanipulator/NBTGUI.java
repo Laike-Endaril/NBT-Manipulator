@@ -18,7 +18,9 @@ import com.fantasticsource.mctools.gui.screen.TextSelectionGUI;
 import com.fantasticsource.mctools.gui.screen.YesNoGUI;
 import com.fantasticsource.tools.datastructures.Color;
 import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.INBTSerializable;
 
@@ -76,6 +78,17 @@ public class NBTGUI extends GUIScreen
             String codeString = code.getCodeAsCompressedString();
             try
             {
+                NBTTagCompound compound = JsonToNBT.getTagFromJson(codeString);
+                compound.removeTag("UUIDMost");
+                compound.removeTag("UUIDLeast");
+                codeString = compound.toString();
+            }
+            catch (NBTException e)
+            {
+                e.printStackTrace();
+            }
+            try
+            {
                 if (clientSide) ClientCommands.save(codeString);
                 else Network.WRAPPER.sendToServer(new Network.SaveToObjectPacket(codeString));
             }
@@ -89,7 +102,7 @@ public class NBTGUI extends GUIScreen
         saveToServerTemplate = new GUITextButton(this, "Save to Server Template", Color.GREEN);
         saveToServerTemplate.addClickActions(() ->
         {
-            TextInputGUI gui = new TextInputGUI("Save Server Template", "Name: ");
+            TextInputGUI gui = new TextInputGUI("Save Server " + category + " Template", "Name: ");
             gui.input.input.filter = FilterNotEmpty.INSTANCE;
             gui.doneButton.onClickActions.clear();
             gui.doneButton.addClickActions(() ->
@@ -116,7 +129,7 @@ public class NBTGUI extends GUIScreen
         saveToLocalTemplate = new GUITextButton(this, "Save to Local Template", Color.GREEN);
         saveToLocalTemplate.addClickActions(() ->
         {
-            TextInputGUI gui = new TextInputGUI("Save Server Template", "Name: ");
+            TextInputGUI gui = new TextInputGUI("Save Local " + category + " Template", "Name: ");
             gui.input.input.filter = FilterNotEmpty.INSTANCE;
             gui.doneButton.onClickActions.clear();
             gui.doneButton.addClickActions(() ->
@@ -131,7 +144,7 @@ public class NBTGUI extends GUIScreen
                     if (oldTemplate == null)
                     {
                         map2.put(template.name, template);
-                        gui.close();
+                        template.saveToFile();
                     }
                     else
                     {
@@ -142,7 +155,7 @@ public class NBTGUI extends GUIScreen
                             if (gui2.pressedYes)
                             {
                                 map2.put(template.name, template);
-                                gui.close();
+                                template.saveToFile();
                             }
                         });
                     }
@@ -199,21 +212,6 @@ public class NBTGUI extends GUIScreen
 
         //Warning
         setError("WARNING!!!\nLooking at the NBT should never cause an issue, but editing and saving can cause crashes and world corruption if you don't know what you're doing!  Use at your own risk!  World backup suggested!");
-
-
-        //Server Template List
-
-        ArrayList<String> serverList = new ArrayList<>(serverMap.keySet());
-        Collections.sort(serverList);
-        //TODO
-
-
-        //Local Template List
-
-        HashMap<String, CNBTTemplate> clientMap = CNBTTemplate.TEMPLATES.get(category);
-        ArrayList<String> clientList = clientMap == null ? new ArrayList<>() : new ArrayList<>(clientMap.keySet());
-        Collections.sort(clientList);
-        //TODO
     }
 
     @Override

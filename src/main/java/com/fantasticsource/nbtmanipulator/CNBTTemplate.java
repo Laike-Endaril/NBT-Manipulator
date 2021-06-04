@@ -1,5 +1,6 @@
 package com.fantasticsource.nbtmanipulator;
 
+import com.fantasticsource.mctools.MCTools;
 import com.fantasticsource.tools.ReflectionTool;
 import com.fantasticsource.tools.component.CStringUTF8;
 import com.fantasticsource.tools.component.Component;
@@ -16,11 +17,13 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.INBTSerializable;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.HashMap;
+
+import static com.fantasticsource.nbtmanipulator.NBTManipulator.MODID;
 
 public class CNBTTemplate extends Component
 {
@@ -129,6 +132,51 @@ public class CNBTTemplate extends Component
 
         existingObject.deserializeNBT(objectNBT); //TileEntity, EntityPlayer
         return existingObject;
+    }
+
+
+    public void saveToFile()
+    {
+        File file = new File(MCTools.getConfigDir() + MODID + File.separator + name + ".dat");
+        file.mkdirs();
+        while (file.exists()) file.delete();
+        try
+        {
+            FileOutputStream stream = new FileOutputStream(file);
+            save(stream);
+            stream.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public static void loadAll(FMLPreInitializationEvent event)
+    {
+        File folder = new File(MCTools.getConfigDir() + MODID);
+        if (folder.exists() && folder.isDirectory())
+        {
+            File[] files = folder.listFiles();
+            if (files != null)
+            {
+                for (File file : files)
+                {
+                    try
+                    {
+                        FileInputStream stream = new FileInputStream(file);
+                        CNBTTemplate template = new CNBTTemplate().load(stream);
+                        CNBTTemplate.TEMPLATES.computeIfAbsent(template.category, o -> new HashMap<>()).put(template.name, template);
+
+                        stream.close();
+                    }
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
 
